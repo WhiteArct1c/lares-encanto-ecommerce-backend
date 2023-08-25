@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+  laresencanto-postgres:
+    image: postgres
+    volumes:
+      - ./db-postgres/scripts/create-tables.sql:/docker-entrypoint-initdb.d/create-tables.sql
+      - ./db-postgres/scripts/inserts-default-values.sql:/docker-entrypoint-initdb.d/inserts-default-values.sql
+      - PGDATA:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: "postgres"
+    ports:
+      - "5433:5432"
+    networks:
+      - laresencanto-docker-network
+
+  laresencanto-pgadmin4:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "laresencantoles@gmail.com"
+      PGADMIN_DEFAULT_PASSWORD: "laresencanto123"
+    ports:
+      - "15432:80"
+    depends_on:
+      - laresencanto-postgres
+    networks:
+      - laresencanto-docker-network
+
+networks:
+  laresencanto-docker-network:
+    driver: bridge
+
+volumes:
+  PGDATA:
