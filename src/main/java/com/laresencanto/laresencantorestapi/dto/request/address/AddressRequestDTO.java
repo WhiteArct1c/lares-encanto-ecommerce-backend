@@ -1,6 +1,6 @@
-package com.laresencanto.laresencantorestapi.dto.address;
+package com.laresencanto.laresencantorestapi.dto.request.address;
 
-public record Address(
+public record AddressRequestDTO(
         String title,
         String cep,
         String residenceType,

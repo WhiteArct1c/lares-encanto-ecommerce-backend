@@ -1,4 +1,4 @@
--- Criação da tabela 'users'
+-- Criação da tabela 'user'
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -34,7 +34,7 @@ CREATE TABLE customer (
     cpf VARCHAR(14) NOT NULL,
     birthDate DATE,
     cellphone VARCHAR(20),
-    userId INT REFERENCES users(id)
+    userId INT UNIQUE REFERENCES users(id)
 );
 
 -- Tabela de relacionamento entre 'customer' e 'address'
@@ -43,4 +43,3 @@ CREATE TABLE customer_address (
     addressId INT REFERENCES address(id),
     PRIMARY KEY (customerId, addressId)
 );
-

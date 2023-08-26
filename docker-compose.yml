@@ -4,8 +4,6 @@ services:
   laresencanto-postgres:
     image: postgres
     volumes:
-      - ./db-postgres/scripts/create-tables.sql:/docker-entrypoint-initdb.d/create-tables.sql
-      - ./db-postgres/scripts/inserts-default-values.sql:/docker-entrypoint-initdb.d/inserts-default-values.sql
       - PGDATA:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: "postgres"

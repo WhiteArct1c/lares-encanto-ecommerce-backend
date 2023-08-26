@@ -1,0 +1,4 @@
+INSERT INTO gender (name) VALUES
+ ('MASCULINO'),
+ ('FEMININO'),
+ ('OUTROS');
