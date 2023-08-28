@@ -1,4 +1,4 @@
-package com.laresencanto.laresencantorestapi.dto.request.address;
+package com.laresencanto.laresencantorestapi.dto.request;
 
 public record AddressRequestDTO(
         String title,

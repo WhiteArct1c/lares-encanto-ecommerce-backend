@@ -1,12 +1,13 @@
-package com.laresencanto.laresencantorestapi.dto.request.customer;
+package com.laresencanto.laresencantorestapi.dto.request;
 
-import com.laresencanto.laresencantorestapi.dto.request.address.AddressRequestDTO;
-import com.laresencanto.laresencantorestapi.dto.request.user.UserRequestDTO;
 import com.laresencanto.laresencantorestapi.utils.enums.Gender;
+import org.hibernate.validator.constraints.br.CPF;
 
 public record CustomerRequestDTO(
-        UserRequestDTO user,
+        RegisterRequestDTO user,
         String fullName,
+
+        @CPF(message = "CPF deve ser válido")
         String cpf,
         String birthDate,
         String phone,

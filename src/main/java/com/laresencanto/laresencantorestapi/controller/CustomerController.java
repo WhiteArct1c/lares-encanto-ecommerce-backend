@@ -1,8 +1,9 @@
 package com.laresencanto.laresencantorestapi.controller;
 
-import com.laresencanto.laresencantorestapi.domain.Customer;
-import com.laresencanto.laresencantorestapi.dto.request.customer.CustomerRequestDTO;
+import com.laresencanto.laresencantorestapi.dto.request.CustomerRequestDTO;
+import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
 import com.laresencanto.laresencantorestapi.service.CustomerService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,13 +19,13 @@ public class CustomerController {
     }
 
     @PostMapping
-    public ResponseEntity<Customer> createCustomer(@RequestBody CustomerRequestDTO data){
-        Customer savedCustomer = customerService.saveCustomer(data);
-        return ResponseEntity.ok(savedCustomer);
+    public ResponseEntity<ResponseDTO> registerCustomer(@RequestBody @Valid CustomerRequestDTO data){
+        ResponseDTO response = customerService.saveCustomer(data);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping
     public String getDummy(){
-        return "vai toma no cu";
+        return "Hello world";
     }
 }
