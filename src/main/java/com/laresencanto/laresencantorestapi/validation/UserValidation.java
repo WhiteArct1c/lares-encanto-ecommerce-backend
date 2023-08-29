@@ -1,6 +1,6 @@
 package com.laresencanto.laresencantorestapi.validation;
 
-import com.laresencanto.laresencantorestapi.dto.request.CustomerRequestDTO;
+import com.laresencanto.laresencantorestapi.dto.request.customer.CustomerRequestDTO;
 import com.laresencanto.laresencantorestapi.strategy.IStrategy;
 import com.laresencanto.laresencantorestapi.strategy.impl.user.*;
 

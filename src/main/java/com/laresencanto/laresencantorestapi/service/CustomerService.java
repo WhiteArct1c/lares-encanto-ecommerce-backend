@@ -4,9 +4,11 @@ import com.laresencanto.laresencantorestapi.domain.Address;
 import com.laresencanto.laresencantorestapi.domain.Customer;
 import com.laresencanto.laresencantorestapi.domain.Gender;
 import com.laresencanto.laresencantorestapi.domain.User;
-import com.laresencanto.laresencantorestapi.dto.request.CustomerRequestDTO;
+import com.laresencanto.laresencantorestapi.dto.request.customer.CustomerRequestDTO;
+import com.laresencanto.laresencantorestapi.dto.request.customer.CustomerUpdateRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.customer.CustomerResponseDTO;
+import com.laresencanto.laresencantorestapi.dto.response.customer.CustomerUpdateResponseDTO;
 import com.laresencanto.laresencantorestapi.repository.CustomerRepository;
 import com.laresencanto.laresencantorestapi.repository.GenderRepository;
 import com.laresencanto.laresencantorestapi.utils.enums.UserRole;
@@ -42,13 +44,13 @@ public class CustomerService {
         Customer newCustomer = customerRepository.save(customer);
 
         CustomerResponseDTO response = new CustomerResponseDTO(
-                customer.getId(),
-                customer.getFullName(),
-                customer.getCpf(),
-                customer.getBirthDate(),
-                customer.getPhone(),
-                customer.getGender(),
-                customer.getAddress()
+                newCustomer.getId(),
+                newCustomer.getFullName(),
+                newCustomer.getCpf(),
+                newCustomer.getBirthDate(),
+                newCustomer.getPhone(),
+                newCustomer.getGender(),
+                newCustomer.getAddress()
         );
 
         return new ResponseDTO<>(HttpStatus.CREATED.toString(), "Cliente salvo com sucesso", List.of(response));
@@ -72,6 +74,39 @@ public class CustomerService {
             );
         }
         return new ResponseDTO<>(HttpStatus.OK.toString(), "Lista de clientes resgatada com sucesso", response);
+    }
+
+    public ResponseDTO<CustomerUpdateResponseDTO> update(CustomerUpdateRequestDTO customerUpdateRequestDTO){
+        List<CustomerUpdateResponseDTO> response = new ArrayList<>();
+        Optional<Customer> optionalCustomer = customerRepository.findByCpf(customerUpdateRequestDTO.cpf());
+        Gender gender = genderRepository.findByName(customerUpdateRequestDTO.gender().name());
+
+        if(optionalCustomer.isPresent()){
+            Customer customer = optionalCustomer.get();
+
+            customer.setFullName(customerUpdateRequestDTO.fullName());
+            customer.setCpf(customerUpdateRequestDTO.cpf());
+            customer.setBirthDate(customerUpdateRequestDTO.birthDate());
+            customer.setPhone(customerUpdateRequestDTO.phone());
+            customer.setGender(gender);
+
+            Customer updatedCustomer = customerRepository.save(customer);
+
+            response.add(
+                    new CustomerUpdateResponseDTO(
+                            updatedCustomer.getId(),
+                            updatedCustomer.getFullName(),
+                            updatedCustomer.getCpf(),
+                            updatedCustomer.getBirthDate(),
+                            updatedCustomer.getPhone(),
+                            updatedCustomer.getGender()
+                    )
+            );
+
+            return new ResponseDTO<>(HttpStatus.OK.toString(), "Dados atualizados com sucesso", response);
+        }else{
+            return new ResponseDTO<>(HttpStatus.BAD_REQUEST.toString(), "Erro ao atualizar os dados, por favor, tente novamente mais tarde", null);
+        }
     }
 
     private String validateCustomerRequestData(CustomerRequestDTO customerRequestDTO){
@@ -101,6 +136,7 @@ public class CustomerService {
         user.setEmail(customerRequestDTO.user().email());
         user.setPassword(customerRequestDTO.user().password());
         user.setRole(UserRole.USER); //sempre será usuários comuns
+        user.setIsActive("1");
 
         addressCustomer.setTitle(customerRequestDTO.address().title());
         addressCustomer.setCep(customerRequestDTO.address().cep());

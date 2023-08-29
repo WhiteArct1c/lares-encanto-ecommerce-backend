@@ -3,9 +3,10 @@ package com.laresencanto.laresencantorestapi.controller;
 import com.laresencanto.laresencantorestapi.domain.Customer;
 import com.laresencanto.laresencantorestapi.domain.User;
 import com.laresencanto.laresencantorestapi.dto.request.AuthenticationDTO;
-import com.laresencanto.laresencantorestapi.dto.request.CustomerRequestDTO;
+import com.laresencanto.laresencantorestapi.dto.request.customer.CustomerRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.customer.CustomerResponseDTO;
+import com.laresencanto.laresencantorestapi.dto.response.error.ResponseErrorDTO;
 import com.laresencanto.laresencantorestapi.dto.response.login.LoginResponseDTO;
 import com.laresencanto.laresencantorestapi.repository.CustomerRepository;
 import com.laresencanto.laresencantorestapi.repository.UserRepository;
@@ -16,7 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -56,13 +56,28 @@ public class AuthenticationController {
 
         var token = tokenService.generateToken((User) auth.getPrincipal());
 
-        return ResponseEntity.ok(
-                new ResponseDTO<>(
-                        HttpStatus.OK.toString(),
-                        "Login efetuado com sucesso!",
-                        List.of(new LoginResponseDTO(token))
-                )
-        );
+        var decodedToken = tokenService.decodedJwtToken(token);
+        User user = (User) userRepository.findByEmail(decodedToken.getSubject());
+
+        if(user.getIsActive().equals("1")){
+            return ResponseEntity.ok(
+                    new ResponseDTO<>(
+                            HttpStatus.OK.toString(),
+                            "Login efetuado com sucesso!",
+                            List.of(new LoginResponseDTO(token))
+                    )
+            );
+        }else{
+            return ResponseEntity.ok(
+                    new ResponseErrorDTO(
+                            HttpStatus.BAD_REQUEST.toString(),
+                            "Usuário está inativado! Consulte o administrador do sistema.",
+                            null
+                    )
+            );
+        }
+
+
     }
 
     @PostMapping("/register")
@@ -91,4 +106,20 @@ public class AuthenticationController {
 
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/deactivate-account")
+    public ResponseEntity<ResponseDTO> inactivateAccount(@RequestBody @Valid String token){
+        try{
+            var decodedToken = tokenService.decodedJwtToken(token);
+            User user = (User) userRepository.findByEmail(decodedToken.getSubject());
+            user.setIsActive("0");
+            userRepository.save(user);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK.toString(), "Conta inativada com sucesso!", null);
+            return ResponseEntity.ok(response);
+        }catch (Exception e){
+            ResponseDTO response = new ResponseDTO(HttpStatus.INTERNAL_SERVER_ERROR.toString(), "Erro ao desativar conta!", null);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
 }

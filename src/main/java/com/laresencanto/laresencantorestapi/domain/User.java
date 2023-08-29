@@ -32,8 +32,11 @@ public class User implements UserDetails {
 
     @Column(name = "password")
     private String password;
-
+    @Column(name = "role")
     private UserRole role;
+
+    @Column(name = "is_active")
+    private String isActive;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
