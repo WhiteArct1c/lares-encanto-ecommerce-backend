@@ -11,8 +11,6 @@ public record AddressRequestDTO(
         String addressNumber,
         String neighborhoods,
         String city,
-
-        @NotEmpty(message = "teste")
         String state,
         String country,
         String observations
