@@ -1,5 +1,7 @@
 package com.laresencanto.laresencantorestapi.dto.request;
 
+import jakarta.validation.constraints.NotEmpty;
+
 public record AddressRequestDTO(
         String title,
         String cep,
@@ -9,6 +11,8 @@ public record AddressRequestDTO(
         String addressNumber,
         String neighborhoods,
         String city,
+
+        @NotEmpty(message = "teste")
         String state,
         String country,
         String observations

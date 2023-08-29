@@ -18,14 +18,9 @@ public class CustomerController {
         this.customerService = customerService;
     }
 
-    @PostMapping
-    public ResponseEntity<ResponseDTO> registerCustomer(@RequestBody @Valid CustomerRequestDTO data){
-        ResponseDTO response = customerService.saveCustomer(data);
-        return ResponseEntity.ok(response);
-    }
-
     @GetMapping
-    public String getDummy(){
-        return "Hello world";
+    public ResponseEntity<ResponseDTO> getAllCustomers(){
+        ResponseDTO response = customerService.listAllCostumers();
+        return ResponseEntity.ok(response);
     }
 }

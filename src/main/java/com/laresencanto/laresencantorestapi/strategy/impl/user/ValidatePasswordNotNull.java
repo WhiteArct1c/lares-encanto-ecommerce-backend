@@ -3,12 +3,11 @@ package com.laresencanto.laresencantorestapi.strategy.impl.user;
 import com.laresencanto.laresencantorestapi.dto.request.CustomerRequestDTO;
 import com.laresencanto.laresencantorestapi.strategy.IStrategy;
 
-public class ValidatePassword implements IStrategy<CustomerRequestDTO> {
-
+public class ValidatePasswordNotNull implements IStrategy<CustomerRequestDTO> {
     @Override
     public String validate(CustomerRequestDTO data) {
-        if(!data.user().password().equals(data.user().confirmedPassword())){
-            return "Senhas não são iguais.";
+        if (data.user().password() == null) {
+            return "A senha não pode ser nula.";
         }
         return "";
     }

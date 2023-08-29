@@ -3,6 +3,7 @@ package com.laresencanto.laresencantorestapi.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
 import java.util.Set;
 
 
@@ -31,9 +32,12 @@ public class Customer {
     @Column(name = "cellphone")
     private String phone;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
+    @ManyToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name = "genderid")
     private Gender gender;
+
+    @Column(name = "ranking")
+    private String ranking;
 
     @OneToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "userid")
@@ -41,4 +45,7 @@ public class Customer {
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<Address> address;
+
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
+    private List<CreditCard> creditCardList;
 }
