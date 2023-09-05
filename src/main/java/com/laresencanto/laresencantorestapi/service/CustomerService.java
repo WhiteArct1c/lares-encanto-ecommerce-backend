@@ -4,6 +4,7 @@ import com.laresencanto.laresencantorestapi.domain.Address;
 import com.laresencanto.laresencantorestapi.domain.Customer;
 import com.laresencanto.laresencantorestapi.domain.Gender;
 import com.laresencanto.laresencantorestapi.domain.User;
+import com.laresencanto.laresencantorestapi.dto.request.RegisterRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.request.customer.CustomerRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.request.customer.CustomerUpdateRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
@@ -32,10 +33,10 @@ public class CustomerService {
     }
 
     public ResponseDTO<CustomerResponseDTO> saveCustomer(CustomerRequestDTO customerRequestDTO){
-        String errors = validateCustomerRequestData(customerRequestDTO);
+        String errors = validateCustomerRequestData(customerRequestDTO.user());
 
         if(!errors.isEmpty()){
-            return new ResponseDTO<CustomerResponseDTO>(HttpStatus.BAD_REQUEST.toString(), errors, null);
+            return new ResponseDTO<>(HttpStatus.BAD_REQUEST.toString(), errors, null);
         }
 
         Customer customer = saveCustomerRequestMapper(customerRequestDTO);
@@ -109,14 +110,6 @@ public class CustomerService {
         }
     }
 
-    private String validateCustomerRequestData(CustomerRequestDTO customerRequestDTO){
-        StringBuilder errors = new StringBuilder();
-
-        errors.append(userValidation.validateRules(customerRequestDTO));
-
-        return errors.toString();
-    }
-
     private Customer saveCustomerRequestMapper(CustomerRequestDTO customerRequestDTO) {
         Customer customer = new Customer();
         Gender gender = genderRepository.findByName(customerRequestDTO.gender().name());
@@ -156,6 +149,14 @@ public class CustomerService {
         customer.setAddress(addresses);
 
         return customer;
+    }
+
+    private String validateCustomerRequestData(RegisterRequestDTO registerRequestDTO){
+        StringBuilder errors = new StringBuilder();
+
+        errors.append(userValidation.validateCustomerRequestRules(registerRequestDTO));
+
+        return errors.toString();
     }
 
 }

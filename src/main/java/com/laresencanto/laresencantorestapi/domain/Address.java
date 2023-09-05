@@ -49,4 +49,17 @@ public class Address {
     @Column(name = "observations")
     private String observations;
 
+    public Address(String title, String cep, String residenceType, String addressType, String streetName, String addressNumber, String neighborhoods, String state, String city, String country, String observations) {
+        this.title = title;
+        this.cep = cep;
+        this.residenceType = residenceType;
+        this.addressType = addressType;
+        this.streetName = streetName;
+        this.addressNumber = addressNumber;
+        this.neighborhoods = neighborhoods;
+        this.state = state;
+        this.city = city;
+        this.country = country;
+        this.observations = observations;
+    }
 }

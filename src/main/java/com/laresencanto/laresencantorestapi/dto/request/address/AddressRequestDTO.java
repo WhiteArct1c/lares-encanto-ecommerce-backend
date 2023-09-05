@@ -1,4 +1,4 @@
-package com.laresencanto.laresencantorestapi.dto.request;
+package com.laresencanto.laresencantorestapi.dto.request.address;
 
 import jakarta.validation.constraints.NotEmpty;
 

@@ -1,5 +1,7 @@
 package com.laresencanto.laresencantorestapi.service;
 
+import com.laresencanto.laresencantorestapi.dto.request.user.UpdatePasswordRequestDTO;
+import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
 import com.laresencanto.laresencantorestapi.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

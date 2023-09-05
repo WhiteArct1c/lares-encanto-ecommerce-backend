@@ -1,6 +1,6 @@
 package com.laresencanto.laresencantorestapi.dto.request.customer;
 
-import com.laresencanto.laresencantorestapi.dto.request.AddressRequestDTO;
+import com.laresencanto.laresencantorestapi.dto.request.address.AddressRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.request.RegisterRequestDTO;
 import com.laresencanto.laresencantorestapi.utils.enums.Gender;
 import jakarta.validation.constraints.NotEmpty;

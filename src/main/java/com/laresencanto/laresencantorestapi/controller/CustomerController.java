@@ -3,6 +3,7 @@ package com.laresencanto.laresencantorestapi.controller;
 import com.laresencanto.laresencantorestapi.dto.request.customer.CustomerUpdateRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.customer.CustomerUpdateResponseDTO;
+import com.laresencanto.laresencantorestapi.service.AddressService;
 import com.laresencanto.laresencantorestapi.service.CustomerService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +16,9 @@ public class CustomerController {
 
     private final CustomerService customerService;
 
-    public CustomerController(CustomerService customerService){
+    public CustomerController(
+            CustomerService customerService
+    ){
         this.customerService = customerService;
     }
 
@@ -25,9 +28,10 @@ public class CustomerController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/update")
+    @PutMapping
     public ResponseEntity<ResponseDTO<CustomerUpdateResponseDTO>> updateCustomer(@RequestBody @Valid CustomerUpdateRequestDTO customerData){
         ResponseDTO<CustomerUpdateResponseDTO> response = customerService.update(customerData);
         return ResponseEntity.ok(response);
     }
+
 }
