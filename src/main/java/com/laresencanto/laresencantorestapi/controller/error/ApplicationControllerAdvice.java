@@ -18,24 +18,24 @@ public class ApplicationControllerAdvice {
     public ResponseErrorDTO handleInvalidRequestArgument(MethodArgumentNotValidException ex){
         return new ResponseErrorDTO(
             ex.getStatusCode().toString(),
-            ex.getFieldError().getDefaultMessage(),
+            "Erro interno, por favor, tento novamente mais tarde",
             null
         );
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    public ResponseErrorDTO handleBadCredentialsException(BadCredentialsException ex){
+    public ResponseErrorDTO handleBadCredentialsException(){
         return new ResponseErrorDTO(
             HttpStatus.FORBIDDEN.toString(),
-            ex.getMessage(),
-            null
+                "Usuário inexistente ou senha inválida",
+                null
         );
     }
 
     @ExceptionHandler(InternalAuthenticationServiceException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    public ResponseErrorDTO handleNonExistentEmail(InternalAuthenticationServiceException ex){
+    public ResponseErrorDTO handleNonExistentEmail(){
         return new ResponseErrorDTO(
                 HttpStatus.FORBIDDEN.toString(),
                 "Usuário inexistente ou senha inválida",
@@ -45,7 +45,7 @@ public class ApplicationControllerAdvice {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseErrorDTO handleMissingRequiredFields(DataIntegrityViolationException ex){
+    public ResponseErrorDTO handleMissingRequiredFields(){
         return new ResponseErrorDTO(
                 HttpStatus.BAD_REQUEST.toString(),
                 "Existe algum campo obrigatório que não foi informado.",
