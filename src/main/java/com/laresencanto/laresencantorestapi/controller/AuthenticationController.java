@@ -133,4 +133,28 @@ public class AuthenticationController {
             return ResponseEntity.internalServerError().body(response);
         }
     }
+
+    @PostMapping("/verify-role")
+    public ResponseEntity<ResponseDTO> verifyUserRole(@RequestBody @Valid String token){
+        try{
+            var decodedToken = tokenService.decodedJwtToken(token);
+            User user = (User) userRepository.findByEmail(decodedToken.getSubject());
+
+            ResponseDTO response = new ResponseDTO(
+                    HttpStatus.OK.toString(),
+                    null,
+                    List.of(user.getRole())
+            );
+
+            return ResponseEntity.ok(response);
+        }catch(Exception e){
+            ResponseDTO response = new ResponseDTO(
+                    HttpStatus.INTERNAL_SERVER_ERROR.toString(),
+                    "Erro ao verificar nível de permissão do usuário:::" + e,
+                    null
+            );
+
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
 }
