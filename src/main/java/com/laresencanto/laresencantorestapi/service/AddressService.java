@@ -3,7 +3,7 @@ package com.laresencanto.laresencantorestapi.service;
 import com.laresencanto.laresencantorestapi.domain.Address;
 import com.laresencanto.laresencantorestapi.domain.Customer;
 import com.laresencanto.laresencantorestapi.domain.User;
-import com.laresencanto.laresencantorestapi.dto.request.address.AddressRequestDTO;
+import com.laresencanto.laresencantorestapi.dto.request.address.AddressAddRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.request.address.AddressUpdateRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.error.ResponseErrorDTO;
@@ -14,7 +14,6 @@ import com.laresencanto.laresencantorestapi.security.TokenService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -38,7 +37,7 @@ public class AddressService {
         this.tokenService = tokenService;
     }
 
-    public ResponseDTO save(AddressUpdateRequestDTO address){
+    public ResponseDTO save(AddressAddRequestDTO address){
         var decodedToken = tokenService.decodedJwtToken(address.token());
         User user = (User) userRepository.findByEmail(decodedToken.getSubject());
         Optional<Customer> customer = customerRepository.findByUser(user);
@@ -83,5 +82,34 @@ public class AddressService {
         }else{
             return  new ResponseDTO<ResponseErrorDTO>(HttpStatus.BAD_REQUEST.toString(), "Endereço informado não encontrado!", null);
         }
+    }
+
+    public ResponseDTO update(AddressUpdateRequestDTO address) {
+        var decodedToken = tokenService.decodedJwtToken(address.token());
+        User user = (User) userRepository.findByEmail(decodedToken.getSubject());
+        Optional<Customer> customer = customerRepository.findByUser(user);
+
+        if(customer.isEmpty()) {
+            return new ResponseDTO(HttpStatus.INTERNAL_SERVER_ERROR.toString(), "Erro ao atualizar endereço!", null);
+        }
+
+        Address newAddress = new Address(
+                Long.parseLong(address.address().id()),
+                address.address().title(),
+                address.address().cep(),
+                address.address().residenceType(),
+                address.address().addressType(),
+                address.address().streetName(),
+                address.address().addressNumber(),
+                address.address().neighborhoods(),
+                address.address().state(),
+                address.address().city(),
+                address.address().country(),
+                address.address().observations()
+        );
+
+        addressRepository.save(newAddress);
+
+        return new ResponseDTO(HttpStatus.OK.toString(), "Endereço atualizado com sucesso!", null);
     }
 }
