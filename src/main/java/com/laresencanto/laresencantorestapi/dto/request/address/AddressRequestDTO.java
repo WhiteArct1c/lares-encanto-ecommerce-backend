@@ -1,7 +1,5 @@
 package com.laresencanto.laresencantorestapi.dto.request.address;
 
-import jakarta.validation.constraints.NotEmpty;
-
 public record AddressRequestDTO(
         String id,
         String title,

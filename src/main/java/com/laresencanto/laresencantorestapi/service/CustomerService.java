@@ -21,7 +21,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class CustomerService {
@@ -106,7 +105,7 @@ public class CustomerService {
 
             CreditCard newCard = creditCardRepository.save(card);
 
-            return new ResponseDTO<CustomerCreditCardResponse>(
+            return new ResponseDTO<>(
                     HttpStatus.CREATED.toString(),
                     "Cartão de crédito salvo com sucesso!",
                     null
@@ -245,11 +244,7 @@ public class CustomerService {
     }
 
     private String validateCustomerRequestData(RegisterRequestDTO registerRequestDTO){
-        StringBuilder errors = new StringBuilder();
-
-        errors.append(userValidation.validateCustomerRequestRules(registerRequestDTO));
-
-        return errors.toString();
+        return userValidation.validateCustomerRequestRules(registerRequestDTO);
     }
 
 }

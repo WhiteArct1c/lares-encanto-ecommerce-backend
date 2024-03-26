@@ -1,9 +1,7 @@
 package com.laresencanto.laresencantorestapi.validation;
 
-import com.laresencanto.laresencantorestapi.dto.request.RegisterRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.request.address.AddressRequestDTO;
 import com.laresencanto.laresencantorestapi.strategy.IStrategy;
-import com.laresencanto.laresencantorestapi.strategy.impl.user.*;
 
 import java.util.ArrayList;
 import java.util.List;

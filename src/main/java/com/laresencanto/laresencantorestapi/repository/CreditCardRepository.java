@@ -1,8 +1,6 @@
 package com.laresencanto.laresencantorestapi.repository;
 
 import com.laresencanto.laresencantorestapi.domain.CreditCard;
-import com.laresencanto.laresencantorestapi.domain.Customer;
-import com.laresencanto.laresencantorestapi.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
