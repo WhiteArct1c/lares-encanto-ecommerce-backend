@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  laresencanto-postgres:
+  db:
     image: postgres
     volumes:
       - PGDATA:/var/lib/postgresql/data
@@ -12,7 +12,7 @@ services:
     networks:
       - laresencanto-docker-network
 
-  laresencanto-pgadmin4:
+  pgadmin4:
     image: dpage/pgadmin4
     environment:
       PGADMIN_DEFAULT_EMAIL: "laresencantoles@gmail.com"
@@ -20,7 +20,7 @@ services:
     ports:
       - "15432:80"
     depends_on:
-      - laresencanto-postgres
+      - db
     networks:
       - laresencanto-docker-network
 
