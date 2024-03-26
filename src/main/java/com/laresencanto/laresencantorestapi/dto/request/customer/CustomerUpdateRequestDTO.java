@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import org.hibernate.validator.constraints.br.CPF;
 
 public record CustomerUpdateRequestDTO(
+        String token,
         @NotEmpty(message = "Nome completo não pode ser nulo ou vazio")
         String fullName,
         @CPF(message = "CPF deve ser válido")

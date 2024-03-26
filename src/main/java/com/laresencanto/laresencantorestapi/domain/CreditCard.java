@@ -16,20 +16,20 @@ public class CreditCard {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "card_owner")
-    private String cardOwner;
+    @Column(name = "card_flag")
+    private String cardFlag;
 
     @Column(name = "card_number")
     private String cardNumber;
 
-    @Column(name = "month_expiration")
-    private String monthExpiration;
-
-    @Column(name = "year_expiration")
-    private String yearExpiration;
+    @Column(name = "card_name")
+    private String cardName;
 
     @Column(name = "card_code")
     private String cardCode;
+
+    @Column(name = "main_card")
+    private boolean mainCard;
 
     @ManyToOne
     @JoinColumn(name = "customer_id")
