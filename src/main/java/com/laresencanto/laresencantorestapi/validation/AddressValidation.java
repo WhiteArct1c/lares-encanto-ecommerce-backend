@@ -11,7 +11,6 @@ public class AddressValidation {
 
     public AddressValidation(){
         //setting strategy classes for validation
-
     }
 
     public String validateAddressRequestRules(AddressRequestDTO address){
