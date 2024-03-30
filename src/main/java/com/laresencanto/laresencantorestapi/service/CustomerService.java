@@ -2,11 +2,11 @@ package com.laresencanto.laresencantorestapi.service;
 
 import com.laresencanto.laresencantorestapi.domain.*;
 import com.laresencanto.laresencantorestapi.dto.request.RegisterRequestDTO;
-import com.laresencanto.laresencantorestapi.dto.request.customer.CustomerCreateCardRequest;
+import com.laresencanto.laresencantorestapi.dto.request.customer.CreditCardRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.request.customer.CustomerRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.request.customer.CustomerUpdateRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
-import com.laresencanto.laresencantorestapi.dto.response.customer.CustomerCreditCardResponse;
+import com.laresencanto.laresencantorestapi.dto.response.customer.CreditCardResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.customer.CustomerResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.customer.CustomerUpdateResponseDTO;
 import com.laresencanto.laresencantorestapi.repository.CreditCardRepository;
@@ -15,6 +15,7 @@ import com.laresencanto.laresencantorestapi.repository.GenderRepository;
 import com.laresencanto.laresencantorestapi.repository.UserRepository;
 import com.laresencanto.laresencantorestapi.security.TokenService;
 import com.laresencanto.laresencantorestapi.utils.enums.UserRole;
+import com.laresencanto.laresencantorestapi.validation.CreditCardValidation;
 import com.laresencanto.laresencantorestapi.validation.UserValidation;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -30,20 +31,24 @@ public class CustomerService {
     private final TokenService tokenService;
     private final UserRepository userRepository;
     private final CreditCardRepository creditCardRepository;
-
     private final UserValidation userValidation = new UserValidation();
+    private final CreditCardValidation creditCardValidation;
 
-    public CustomerService(CustomerRepository customerRepository,
-                           GenderRepository genderRepository,
-                           TokenService tokenService,
-                           UserRepository userRepository,
-                           CreditCardRepository creditCardRepository
+    public CustomerService(
+            CustomerRepository customerRepository,
+            GenderRepository genderRepository,
+            TokenService tokenService,
+            UserRepository userRepository,
+            CreditCardRepository creditCardRepository,
+            CreditCardValidation creditCardValidation
+
     ){
         this.customerRepository = customerRepository;
         this.genderRepository = genderRepository;
         this.tokenService = tokenService;
         this.userRepository = userRepository;
         this.creditCardRepository = creditCardRepository;
+        this.creditCardValidation = creditCardValidation;
     }
 
     public ResponseDTO<CustomerResponseDTO> saveCustomer(CustomerRequestDTO customerRequestDTO){
@@ -65,67 +70,94 @@ public class CustomerService {
                 newCustomer.getBirthDate(),
                 newCustomer.getPhone(),
                 newCustomer.getGender(),
-                newCustomer.getAddress()
+                newCustomer.getAddress(),
+                null
         );
 
         return new ResponseDTO<>(HttpStatus.CREATED.toString(), "Cliente salvo com sucesso", List.of(response));
     }
 
-    public ResponseDTO<CustomerCreditCardResponse> createCreditCard(CustomerCreateCardRequest customerCreateCardRequest){
-        var decodedToken = tokenService.decodedJwtToken(customerCreateCardRequest.token());
+    public ResponseDTO<CreditCardResponseDTO> createCreditCard(CreditCardRequestDTO creditCardRequestDTO){
+        var decodedToken = tokenService.decodedJwtToken(creditCardRequestDTO.token());
         User user = (User) userRepository.findByEmail(decodedToken.getSubject());
         Optional<Customer> customer = customerRepository.findByUser(user);
 
-        ResponseDTO<CustomerCreditCardResponse> creditCardList = listCreditCard(customerCreateCardRequest.token());
+        String errors = creditCardValidation.validateCreditCardRequestRules(creditCardRequestDTO);
 
-        if(!creditCardList.data().isEmpty()){
-            StringBuilder errors = new StringBuilder();
-            for(CustomerCreditCardResponse card : creditCardList.data() ){
-                if(customerCreateCardRequest.mainCard() && card.mainCard()){
-                    errors.append("Só é possível cadastrar um cartão como principal");
-                }
-            }
-            if(!errors.isEmpty()){
-                return new ResponseDTO<>(
-                        HttpStatus.BAD_REQUEST.toString(),
-                        errors.toString(),
-                        null);
-            }
+        if(!errors.isEmpty()) {
+            return new ResponseDTO<>(HttpStatus.BAD_REQUEST.toString(), errors, null);
         }
 
         if(customer.isPresent()){
             CreditCard card = new CreditCard();
 
-            card.setCardNumber(String.valueOf(customerCreateCardRequest.cardNumber()));
-            card.setCardName(customerCreateCardRequest.cardName());
-            card.setCardCode(String.valueOf(customerCreateCardRequest.cardCode()));
-            card.setCardFlag(customerCreateCardRequest.cardFlag());
-            card.setMainCard(customerCreateCardRequest.mainCard());
+            card.setCardNumber(String.valueOf(creditCardRequestDTO.cardNumber()));
+            card.setCardName(creditCardRequestDTO.cardName());
+            card.setCardCode(String.valueOf(creditCardRequestDTO.cardCode()));
+            card.setCardFlag(creditCardRequestDTO.cardFlag());
+            card.setMainCard(creditCardRequestDTO.mainCard());
             card.setCustomer(customer.get());
 
-            CreditCard newCard = creditCardRepository.save(card);
+            try{
+                creditCardRepository.save(card);
 
-            return new ResponseDTO<>(
-                    HttpStatus.CREATED.toString(),
-                    "Cartão de crédito salvo com sucesso!",
-                    null
-            );
+                return new ResponseDTO<>(
+                        HttpStatus.CREATED.toString(),
+                        "Cartão de crédito salvo com sucesso!",
+                        null
+                );
+            }catch(Exception e){
+                return new ResponseDTO<>(
+                        HttpStatus.BAD_REQUEST.toString(),
+                        "Erro ao cadastrar dados do cartão, tente novamente mais tarde",
+                        null
+                );
+            }
         }
 
         return new ResponseDTO<>(HttpStatus.BAD_REQUEST.toString(), "Erro ao cadastrar dados do cartão, tente novamente mais tarde", null);
     }
 
-    public ResponseDTO<CustomerCreditCardResponse> listCreditCard(String token){
+    public ResponseDTO<CreditCardResponseDTO> deleteCreditCard(CreditCardRequestDTO creditCardRequestDTO) {
+        var decodedToken = tokenService.decodedJwtToken(creditCardRequestDTO.token());
+        User user = (User) userRepository.findByEmail(decodedToken.getSubject());
+        Optional<Customer> customer = customerRepository.findByUser(user);
+
+        if(customer.isEmpty()){
+            return new ResponseDTO<>(
+                    HttpStatus.BAD_REQUEST.toString(),
+                    "Usuário inválido ou sessão expirada, tente novamente mais tarde!",
+                    null
+            );
+        }
+
+        try{
+            creditCardRepository.deleteById(creditCardRequestDTO.id());
+            return new ResponseDTO<>(
+                    HttpStatus.OK.toString(),
+                    "Cartão de crédito excluído com sucesso!",
+                    null
+            );
+        }catch(Exception e){
+            return new ResponseDTO<>(
+                    HttpStatus.BAD_REQUEST.toString(),
+                    "Erro ao excluir cartão de crédito, tente novamente mais tarde",
+                    null
+            );
+        }
+    }
+
+    public ResponseDTO<CreditCardResponseDTO> listCreditCard(String token){
         var decodedToken = tokenService.decodedJwtToken(token);
         User user = (User) userRepository.findByEmail(decodedToken.getSubject());
         Optional<Customer> customer = customerRepository.findByUser(user);
-        List<CustomerCreditCardResponse> response = new ArrayList<>();
+        List<CreditCardResponseDTO> response = new ArrayList<>();
 
         if(customer.isPresent()){
             Optional<List<CreditCard>> creditCards = creditCardRepository.findAllByCustomerId(customer.get().getId());
             if(creditCards.isPresent()){
                 for(CreditCard creditCard: creditCards.get()){
-                    response.add(new CustomerCreditCardResponse(
+                    response.add(new CreditCardResponseDTO(
                             creditCard.getId(),
                             creditCard.getCardNumber(),
                             creditCard.getCardName(),
@@ -160,7 +192,8 @@ public class CustomerService {
                             customer.getBirthDate(),
                             customer.getPhone(),
                             customer.getGender(),
-                            customer.getAddress()
+                            customer.getAddress(),
+                            null
                     )
             );
         }
@@ -246,5 +279,6 @@ public class CustomerService {
     private String validateCustomerRequestData(RegisterRequestDTO registerRequestDTO){
         return userValidation.validateCustomerRequestRules(registerRequestDTO);
     }
+
 
 }
