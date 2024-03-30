@@ -9,10 +9,8 @@ import com.laresencanto.laresencantorestapi.repository.UserRepository;
 import com.laresencanto.laresencantorestapi.security.TokenService;
 import com.laresencanto.laresencantorestapi.strategy.IStrategy;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Component

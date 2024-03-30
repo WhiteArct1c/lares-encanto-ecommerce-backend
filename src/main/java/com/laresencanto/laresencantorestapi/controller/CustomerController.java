@@ -1,6 +1,5 @@
 package com.laresencanto.laresencantorestapi.controller;
 
-import com.laresencanto.laresencantorestapi.dto.request.customer.CustomerCreateCardRequest;
 import com.laresencanto.laresencantorestapi.dto.request.customer.CreditCardRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.request.customer.CustomerUpdateRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
