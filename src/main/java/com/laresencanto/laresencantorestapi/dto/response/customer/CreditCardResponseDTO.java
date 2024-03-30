@@ -1,6 +1,6 @@
 package com.laresencanto.laresencantorestapi.dto.response.customer;
 
-public record CustomerCreditCardResponse(
+public record CreditCardResponseDTO(
         Long id,
         String cardNumber,
         String cardName,
