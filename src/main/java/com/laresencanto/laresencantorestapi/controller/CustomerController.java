@@ -1,9 +1,10 @@
 package com.laresencanto.laresencantorestapi.controller;
 
 import com.laresencanto.laresencantorestapi.dto.request.customer.CustomerCreateCardRequest;
+import com.laresencanto.laresencantorestapi.dto.request.customer.CreditCardRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.request.customer.CustomerUpdateRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
-import com.laresencanto.laresencantorestapi.dto.response.customer.CustomerCreditCardResponse;
+import com.laresencanto.laresencantorestapi.dto.response.customer.CreditCardResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.customer.CustomerUpdateResponseDTO;
 import com.laresencanto.laresencantorestapi.service.CustomerService;
 import jakarta.validation.Valid;
@@ -37,12 +38,17 @@ public class CustomerController {
     }
 
     @PostMapping("/create-credit-card")
-    public ResponseDTO<CustomerCreditCardResponse> createCreditCard(@RequestBody @Valid CustomerCreateCardRequest customerCreateCardRequest){
-        return customerService.createCreditCard(customerCreateCardRequest);
+    public ResponseDTO<CreditCardResponseDTO> createCreditCard(@RequestBody @Valid CreditCardRequestDTO creditCardRequestDTO){
+        return customerService.createCreditCard(creditCardRequestDTO);
+    }
+
+    @PostMapping("/delete-credit-card")
+    public ResponseDTO<CreditCardResponseDTO> deleteCreditCard(@RequestBody @Valid CreditCardRequestDTO creditCardRequestDTO){
+        return customerService.deleteCreditCard(creditCardRequestDTO);
     }
 
     @GetMapping("/list-credit-card")
-    public ResponseDTO<CustomerCreditCardResponse> listCreditCard(@RequestHeader(name="Authorization") String token){
+    public ResponseDTO<CreditCardResponseDTO> listCreditCard(@RequestHeader(name="Authorization") String token){
         if (token != null && token.startsWith("Bearer ")) {
             return customerService.listCreditCard(token.substring(7));
         }
