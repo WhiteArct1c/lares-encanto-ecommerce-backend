@@ -1,6 +1,7 @@
 package com.laresencanto.laresencantorestapi.controller.error;
 
 import com.laresencanto.laresencantorestapi.dto.response.error.ResponseErrorDTO;
+import com.laresencanto.laresencantorestapi.exception.CustomerNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -49,6 +50,16 @@ public class ApplicationControllerAdvice {
         return new ResponseErrorDTO(
                 HttpStatus.BAD_REQUEST.toString(),
                 "Existe algum campo obrigatório que não foi informado.",
+                null
+        );
+    }
+
+    @ExceptionHandler(CustomerNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseErrorDTO handleCustomerNotFoundException(CustomerNotFoundException ex){
+        return new ResponseErrorDTO(
+                HttpStatus.NOT_FOUND.toString(),
+                ex.getMessage(),
                 null
         );
     }
