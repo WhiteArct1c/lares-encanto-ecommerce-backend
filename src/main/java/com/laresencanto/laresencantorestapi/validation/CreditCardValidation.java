@@ -13,8 +13,10 @@ import java.util.List;
 public class CreditCardValidation {
     private final List<IStrategy<CreditCardRequestDTO>> creditCardRules = new ArrayList<>();
 
-    public CreditCardValidation( ValidateFlag validateFlag, ValidateMainCard validationMainCard ) {
-
+    public CreditCardValidation(
+            ValidateFlag validateFlag,
+            ValidateMainCard validationMainCard
+    ) {
         creditCardRules.add(validateFlag);
         creditCardRules.add(validationMainCard);
     }
