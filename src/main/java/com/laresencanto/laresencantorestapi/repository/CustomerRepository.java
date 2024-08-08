@@ -1,11 +1,11 @@
 package com.laresencanto.laresencantorestapi.repository;
 
-import com.laresencanto.laresencantorestapi.domain.Customer;
-import com.laresencanto.laresencantorestapi.domain.User;
-import jakarta.validation.constraints.NotNull;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.Optional;
+import com.laresencanto.laresencantorestapi.domain.Customer;
+import com.laresencanto.laresencantorestapi.domain.User;
 
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
     Optional<Customer> findByFullName(String fullName);
@@ -14,4 +14,5 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     Optional<Customer> findByPhone(String phone);
     Optional<Customer> findByUser (User user);
 
+    Optional<Customer> findByUserId(Long id);
 }
