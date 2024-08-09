@@ -2,7 +2,7 @@
 CREATE OR REPLACE FUNCTION delete_all_records() RETURNS VOID AS $$
 DECLARE
 cur_table_name RECORD;
-    tables_to_preserve TEXT[] := ARRAY['gender', 'flyway_schema_history'];
+    tables_to_preserve TEXT[] := ARRAY['gender', 'flyway_schema_history', 'credit_card_flags'];
 BEGIN
     -- Seleciona o nome de todas as tabelas no schema public
 FOR cur_table_name IN
