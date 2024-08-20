@@ -52,7 +52,7 @@ public class TokenService {
         try {
             Algorithm algorithm = Algorithm.HMAC256(secret);
             JWTVerifier verifier = JWT.require(algorithm).build();
-            return verifier.verify(token);
+            return verifier.verify(token.replace("\"", ""));
         }catch (Exception e){
             e.printStackTrace();
             return null;
