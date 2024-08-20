@@ -3,7 +3,7 @@ package com.laresencanto.laresencantorestapi.validation;
 import com.laresencanto.laresencantorestapi.dto.request.customer.CreditCardRequestDTO;
 import com.laresencanto.laresencantorestapi.strategy.IStrategy;
 import com.laresencanto.laresencantorestapi.strategy.impl.credit_card.ValidateFlag;
-import com.laresencanto.laresencantorestapi.strategy.impl.credit_card.ValidateMainCard;
+import com.laresencanto.laresencantorestapi.strategy.impl.credit_card.ValidateUniqueMainCard;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -15,7 +15,7 @@ public class CreditCardValidation {
 
     public CreditCardValidation(
             ValidateFlag validateFlag,
-            ValidateMainCard validationMainCard
+            ValidateUniqueMainCard validationMainCard
     ) {
         creditCardRules.add(validateFlag);
         creditCardRules.add(validationMainCard);
