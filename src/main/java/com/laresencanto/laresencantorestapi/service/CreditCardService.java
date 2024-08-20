@@ -70,6 +70,26 @@ public class CreditCardService {
             return new ResponseDTO<>(HttpStatus.BAD_REQUEST.toString(), errors, null);
         }
 
+        if(creditCardRequestDTO.mainCard()){
+            List<CreditCard> customerCreditCards = creditCardRepository.findAllByCustomerId(customer.getId());
+            if(!customerCreditCards.isEmpty()){
+                for(CreditCard card: customerCreditCards){
+                    if(card.isMainCard()){
+                        card.setMainCard(false);
+                        try{
+                            creditCardRepository.save(card);
+                        }catch(Exception e){
+                            return new ResponseDTO<>(
+                                    HttpStatus.BAD_REQUEST.toString(),
+                                    "Erro ao atualizar dados do cartão, tente novamente mais tarde",
+                                    null
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
         CreditCard card = new CreditCard();
 
         card.setCardNumber(String.valueOf(creditCardRequestDTO.cardNumber()));
@@ -106,6 +126,26 @@ public class CreditCardService {
             return new ResponseDTO<>(HttpStatus.BAD_REQUEST.toString(), errors, null);
         }
 
+        if(creditCardRequestDTO.mainCard()){
+            List<CreditCard> customerCreditCards = creditCardRepository.findAllByCustomerId(customer.getId());
+            if(!customerCreditCards.isEmpty()){
+                for(CreditCard card: customerCreditCards){
+                    if(card.isMainCard()){
+                        card.setMainCard(false);
+                        try{
+                            creditCardRepository.save(card);
+                        }catch(Exception e){
+                            return new ResponseDTO<>(
+                                    HttpStatus.BAD_REQUEST.toString(),
+                                    "Erro ao atualizar dados do cartão, tente novamente mais tarde",
+                                    null
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
         if(creditCard.isEmpty()){
             return new ResponseDTO<>(
                     HttpStatus.BAD_REQUEST.toString(),
@@ -115,6 +155,7 @@ public class CreditCardService {
         }else{
             CreditCard card = creditCard.get();
 
+            card.setId(id);
             card.setCardNumber(String.valueOf(creditCardRequestDTO.cardNumber()));
             card.setCardName(creditCardRequestDTO.cardName());
             card.setCardCode(String.valueOf(creditCardRequestDTO.cardCode()));
