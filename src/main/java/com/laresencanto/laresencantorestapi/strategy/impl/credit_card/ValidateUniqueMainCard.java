@@ -35,7 +35,7 @@ public class ValidateUniqueMainCard implements IStrategy<CreditCardRequestDTO> {
             CreditCard customerMainCard = customer.get().getCreditCardList().stream().filter(CreditCard::isMainCard).findFirst().orElse(null);
             if(customerMainCard != null && Objects.equals(customerMainCard.getId(), data.id())){
                 if(!data.mainCard()) {
-                    return "Apenas um cartão deve ser principal";
+                    return "Ao menos um cartão deve ser principal";
                 }
             }
         }
