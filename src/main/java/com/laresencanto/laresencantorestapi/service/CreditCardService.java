@@ -184,6 +184,7 @@ public class CreditCardService {
     public ResponseDTO<CreditCardResponseDTO> deleteCreditCard(Long id){
         Customer customer = (Customer) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Optional<CreditCard> creditCard = creditCardRepository.findByIdAndCustomerId(id, customer.getId());
+        List<CreditCard> customerCreditCards = creditCardRepository.findAllByCustomerId(customer.getId());
 
         if(creditCard.isEmpty()){
             return new ResponseDTO<>(
@@ -192,6 +193,24 @@ public class CreditCardService {
                     null
             );
         }else{
+            if(creditCard.get().isMainCard() && customerCreditCards.size() > 1){
+                CreditCard newMainCard = customerCreditCards.stream()
+                        .filter(card -> !card.isMainCard())
+                        .findFirst()
+                        .orElse(null);
+                if(newMainCard != null){
+                    newMainCard.setMainCard(true);
+                    try{
+                        creditCardRepository.save(newMainCard);
+                    }catch(Exception e){
+                        return new ResponseDTO<>(
+                                HttpStatus.BAD_REQUEST.toString(),
+                                "Erro ao atualizar dados do cartão, tente novamente mais tarde",
+                                null
+                        );
+                    }
+                }
+            }
             try{
                 creditCardRepository.deleteById(creditCard.get().getId());
                 return new ResponseDTO<>(
