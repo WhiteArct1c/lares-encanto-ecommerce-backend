@@ -1,15 +1,5 @@
 package com.laresencanto.laresencantorestapi.service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
-
 import com.laresencanto.laresencantorestapi.domain.Address;
 import com.laresencanto.laresencantorestapi.domain.Customer;
 import com.laresencanto.laresencantorestapi.domain.Gender;
@@ -20,10 +10,22 @@ import com.laresencanto.laresencantorestapi.dto.request.customer.CustomerUpdateR
 import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.customer.CustomerResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.customer.CustomerUpdateResponseDTO;
+import com.laresencanto.laresencantorestapi.exception.CustomerNotFoundException;
 import com.laresencanto.laresencantorestapi.repository.CustomerRepository;
 import com.laresencanto.laresencantorestapi.repository.GenderRepository;
 import com.laresencanto.laresencantorestapi.utils.enums.UserRole;
 import com.laresencanto.laresencantorestapi.validation.UserValidation;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Service
 public class CustomerService {
@@ -67,25 +69,24 @@ public class CustomerService {
         return new ResponseDTO<>(HttpStatus.CREATED.toString(), "Cliente salvo com sucesso", List.of(response));
     }
 
-    public ResponseDTO<CustomerResponseDTO> listAllCostumers(){
-        List<Customer> customers = customerRepository.findAll();
-        List<CustomerResponseDTO> response = new ArrayList<>();
+    public Page<CustomerResponseDTO> listAllCustomers(Pageable pageable) throws CustomerNotFoundException {
+        Page<CustomerResponseDTO> response = null;
+        try{
 
-        for(Customer customer: customers) {
-            response.add(
-                    new CustomerResponseDTO(
-                            customer.getId(),
-                            customer.getFullName(),
-                            customer.getCpf(),
-                            customer.getBirthDate(),
-                            customer.getPhone(),
-                            customer.getGender(),
-                            customer.getAddress(),
-                            null
-                    )
-            );
+            response =  customerRepository.findAll(pageable).map(customer -> new CustomerResponseDTO(
+                    customer.getId(),
+                    customer.getFullName(),
+                    customer.getCpf(),
+                    customer.getBirthDate(),
+                    customer.getPhone(),
+                    customer.getGender(),
+                    customer.getAddress(),
+                    null
+            ));
+        }catch (Exception e){
+            throw new CustomerNotFoundException("Nenhum cliente encontrado");
         }
-        return new ResponseDTO<>(HttpStatus.OK.toString(), "Lista de clientes resgatada com sucesso", response);
+        return response;
     }
 
     public ResponseDTO<CustomerUpdateResponseDTO> update(CustomerUpdateRequestDTO customerUpdateRequestDTO){
