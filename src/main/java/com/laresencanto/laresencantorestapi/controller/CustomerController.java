@@ -2,9 +2,14 @@ package com.laresencanto.laresencantorestapi.controller;
 
 import com.laresencanto.laresencantorestapi.dto.request.customer.CustomerUpdateRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
+import com.laresencanto.laresencantorestapi.dto.response.customer.CustomerResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.customer.CustomerUpdateResponseDTO;
+import com.laresencanto.laresencantorestapi.exception.CustomerNotFoundException;
 import com.laresencanto.laresencantorestapi.service.CustomerService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,9 +26,8 @@ public class CustomerController {
     }
 
     @GetMapping
-    public ResponseEntity<ResponseDTO> getAllCustomers(){
-        ResponseDTO response = customerService.listAllCostumers();
-        return ResponseEntity.ok(response);
+    public ResponseEntity<Page<CustomerResponseDTO>> getAllCustomers(@PageableDefault(size = 10, sort = {"id"}) Pageable pageable) throws CustomerNotFoundException {
+        return ResponseEntity.ok(customerService.listAllCustomers(pageable));
     }
 
     @PutMapping
