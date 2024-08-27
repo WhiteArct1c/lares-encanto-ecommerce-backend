@@ -1,21 +1,19 @@
 package com.laresencanto.laresencantorestapi.security;
 
-import java.io.IOException;
-
+import com.laresencanto.laresencantorestapi.domain.Customer;
+import com.laresencanto.laresencantorestapi.domain.User;
+import com.laresencanto.laresencantorestapi.repository.CustomerRepository;
+import com.laresencanto.laresencantorestapi.repository.UserRepository;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.laresencanto.laresencantorestapi.domain.Customer;
-import com.laresencanto.laresencantorestapi.domain.User;
-import com.laresencanto.laresencantorestapi.repository.CustomerRepository;
-import com.laresencanto.laresencantorestapi.repository.UserRepository;
-
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 @Component
 public class SecurityFilter extends OncePerRequestFilter {
@@ -38,12 +36,17 @@ public class SecurityFilter extends OncePerRequestFilter {
         var token = this.recoverToken(request);
 
         if(token != null){
-            var email = tokenService.validateToken(token);
-            User user = userRepository.findByEmail(email);
-            Customer customer = customerRepository.findByUserId(user.getId()).orElse(null);
+            try {
+                var email = tokenService.validateToken(token);
+                User user = userRepository.findByEmail(email);
+                Customer customer = customerRepository.findByUserId(user.getId()).orElse(null);
 
-            var authentication = new UsernamePasswordAuthenticationToken(customer, null, user.getAuthorities());
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                var authentication = new UsernamePasswordAuthenticationToken(customer, null, user.getAuthorities());
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }catch (Exception e) {
+                SecurityContextHolder.clearContext();
+                response.sendError(403, "Invalid token");
+            }
         }
         filterChain.doFilter(request, response);
     }
