@@ -1,7 +1,11 @@
 package com.laresencanto.laresencantorestapi.domain;
 
+import com.laresencanto.laresencantorestapi.utils.enums.AddressCategory;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.List;
+import java.util.Set;
 
 
 @Entity
@@ -28,6 +32,12 @@ public class Address {
     @Column(name = "addresstype")
     private String addressType;
 
+    @ElementCollection(targetClass = AddressCategory.class, fetch = FetchType.EAGER)
+    @CollectionTable(name = "address_category", joinColumns = @JoinColumn(name = "id"))
+    @Column(name = "category")
+    @Enumerated(EnumType.STRING)
+    private List<AddressCategory> categories;
+
     @Column(name = "streetname")
     private String streetName;
 
@@ -49,11 +59,25 @@ public class Address {
     @Column(name = "observations")
     private String observations;
 
-    public Address(String title, String cep, String residenceType, String addressType, String streetName, String addressNumber, String neighborhoods, String state, String city, String country, String observations) {
+    public Address(
+            String title,
+            String cep,
+            String residenceType,
+            String addressType,
+            List<AddressCategory> categories,
+            String streetName,
+            String addressNumber,
+            String neighborhoods,
+            String state,
+            String city,
+            String country,
+            String observations
+    ) {
         this.title = title;
         this.cep = cep;
         this.residenceType = residenceType;
         this.addressType = addressType;
+        this.categories = categories;
         this.streetName = streetName;
         this.addressNumber = addressNumber;
         this.neighborhoods = neighborhoods;

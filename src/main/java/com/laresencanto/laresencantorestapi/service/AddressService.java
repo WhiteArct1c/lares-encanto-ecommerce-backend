@@ -11,6 +11,7 @@ import com.laresencanto.laresencantorestapi.repository.AddressRepository;
 import com.laresencanto.laresencantorestapi.repository.CustomerRepository;
 import com.laresencanto.laresencantorestapi.repository.UserRepository;
 import com.laresencanto.laresencantorestapi.security.TokenService;
+import com.laresencanto.laresencantorestapi.utils.enums.AddressCategory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -44,11 +45,21 @@ public class AddressService {
 
         if(customer.isPresent()) {
             Set<Address> addresses = customer.get().getAddress();
+            Address billingAddress = addresses.stream()
+                    .filter(a -> a.getCategories().contains(AddressCategory.BILLING))
+                    .findFirst()
+                    .orElse(null);
+
+            if(billingAddress != null && address.address().addressCategories().contains(AddressCategory.BILLING.getCategory())){
+                return new ResponseDTO(HttpStatus.BAD_REQUEST.toString(), "Já existe um endereço de cobrança cadastrado!", null);
+            }
+
             Address newAddress = new Address(
                     address.address().title(),
                     address.address().cep(),
                     address.address().residenceType(),
                     address.address().addressType(),
+                    address.address().addressCategories().stream().map(AddressCategory::fromString).toList(),
                     address.address().streetName(),
                     address.address().addressNumber(),
                     address.address().neighborhoods(),
@@ -93,12 +104,24 @@ public class AddressService {
             return new ResponseDTO(HttpStatus.INTERNAL_SERVER_ERROR.toString(), "Erro ao atualizar endereço!", null);
         }
 
+        Set<Address> addresses = customer.get().getAddress();
+        Optional<Address> billingAddress = addresses.stream()
+                .filter(a -> a.getCategories().contains(AddressCategory.BILLING))
+                .findFirst();
+
+        if(billingAddress.isPresent() && addresses.size() == 1){
+            if(!address.address().addressCategories().contains(AddressCategory.BILLING.getCategory().toUpperCase())){
+                return new ResponseDTO(HttpStatus.BAD_REQUEST.toString(), "Não é possível remover o único endereço de cobrança!", null);
+            }
+        }
+
         Address newAddress = new Address(
                 Long.parseLong(address.address().id()),
                 address.address().title(),
                 address.address().cep(),
                 address.address().residenceType(),
                 address.address().addressType(),
+                address.address().addressCategories().stream().map(AddressCategory::fromString).toList(),
                 address.address().streetName(),
                 address.address().addressNumber(),
                 address.address().neighborhoods(),

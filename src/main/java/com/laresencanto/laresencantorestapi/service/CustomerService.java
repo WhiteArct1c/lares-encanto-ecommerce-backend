@@ -13,6 +13,7 @@ import com.laresencanto.laresencantorestapi.dto.response.customer.CustomerUpdate
 import com.laresencanto.laresencantorestapi.exception.CustomerNotFoundException;
 import com.laresencanto.laresencantorestapi.repository.CustomerRepository;
 import com.laresencanto.laresencantorestapi.repository.GenderRepository;
+import com.laresencanto.laresencantorestapi.utils.enums.AddressCategory;
 import com.laresencanto.laresencantorestapi.utils.enums.UserRole;
 import com.laresencanto.laresencantorestapi.validation.UserValidation;
 import org.springframework.data.domain.Page;
@@ -142,6 +143,7 @@ public class CustomerService {
         addressCustomer.setCep(customerRequestDTO.address().cep());
         addressCustomer.setResidenceType(customerRequestDTO.address().residenceType());
         addressCustomer.setAddressType(customerRequestDTO.address().addressType());
+        addressCustomer.setCategories(customerRequestDTO.address().addressCategories().stream().map(AddressCategory::fromString).toList());
         addressCustomer.setStreetName(customerRequestDTO.address().streetName());
         addressCustomer.setAddressNumber(customerRequestDTO.address().addressNumber());
         addressCustomer.setNeighborhoods(customerRequestDTO.address().neighborhoods());

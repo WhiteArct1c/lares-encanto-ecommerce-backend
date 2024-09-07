@@ -1,6 +1,9 @@
 package com.laresencanto.laresencantorestapi.dto.request.address;
 
+import com.laresencanto.laresencantorestapi.utils.enums.AddressCategory;
 import jakarta.validation.constraints.NotEmpty;
+
+import java.util.List;
 
 public record AddressRequestDTO(
         String id,
@@ -16,6 +19,9 @@ public record AddressRequestDTO(
 
         @NotEmpty(message = "O tipo de endereço é obrigatório")
         String addressType,
+
+        @NotEmpty(message = "A categoria do endereço é obrigatória")
+        List<String> addressCategories,
 
         @NotEmpty(message = "O nome do logradouro é obrigatório")
         String streetName,
