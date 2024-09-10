@@ -13,6 +13,7 @@ import com.laresencanto.laresencantorestapi.repository.UserRepository;
 import com.laresencanto.laresencantorestapi.security.TokenService;
 import com.laresencanto.laresencantorestapi.utils.enums.AddressCategory;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -45,13 +46,27 @@ public class AddressService {
 
         if(customer.isPresent()) {
             Set<Address> addresses = customer.get().getAddress();
+
             Address billingAddress = addresses.stream()
                     .filter(a -> a.getCategories().contains(AddressCategory.BILLING))
                     .findFirst()
                     .orElse(null);
 
-            if(billingAddress != null && address.address().addressCategories().contains(AddressCategory.BILLING.getCategory())){
-                return new ResponseDTO(HttpStatus.BAD_REQUEST.toString(), "Já existe um endereço de cobrança cadastrado!", null);
+            if(address.address().addressCategories().isEmpty()){
+                return new ResponseDTO(HttpStatus.BAD_REQUEST.toString(), "O tipo do endereço é obrigatório!", null);
+            }
+
+            if(billingAddress != null && address.address().addressCategories().contains(AddressCategory.BILLING.getCategory().toUpperCase())){
+                addresses.stream()
+                        .filter(a -> a.getCategories().contains(AddressCategory.BILLING))
+                        .findFirst()
+                        .ifPresent(a -> {
+                            a.getCategories().remove(AddressCategory.BILLING);
+                        });
+            }
+
+            if(addresses.isEmpty() && !address.address().addressCategories().contains(AddressCategory.BILLING.getCategory().toUpperCase())){
+                return new ResponseDTO(HttpStatus.BAD_REQUEST.toString(), "O primeiro endereço cadastrado deve ser de cobrança!", null);
             }
 
             Address newAddress = new Address(
@@ -84,10 +99,22 @@ public class AddressService {
     }
 
     public ResponseDTO delete(String id){
+        Customer customer = (Customer) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
+        Set<Address> customerAddresses = customer.getAddress();
         Optional<Address> address = addressRepository.findById(Long.parseLong(id));
 
         if(address.isPresent()){
+            if(address.get().getCategories().contains(AddressCategory.BILLING) && customerAddresses.size() > 1){
+                customerAddresses.stream()
+                        .filter(a -> !a.getCategories().contains(AddressCategory.BILLING))
+                        .findFirst()
+                        .ifPresent(a -> {
+                            a.getCategories().add(AddressCategory.BILLING);
+                            addressRepository.save(a);
+                        });
+            }
+
             addressRepository.delete(address.get());
             return new ResponseDTO<>(HttpStatus.OK.toString(), "Endereço excluído com sucesso!", null);
         }else{
@@ -105,14 +132,43 @@ public class AddressService {
         }
 
         Set<Address> addresses = customer.get().getAddress();
-        Optional<Address> billingAddress = addresses.stream()
+        Address billingAddress = addresses.stream()
                 .filter(a -> a.getCategories().contains(AddressCategory.BILLING))
-                .findFirst();
+                .findFirst()
+                .orElse(null);
 
-        if(billingAddress.isPresent() && addresses.size() == 1){
-            if(!address.address().addressCategories().contains(AddressCategory.BILLING.getCategory().toUpperCase())){
-                return new ResponseDTO(HttpStatus.BAD_REQUEST.toString(), "Não é possível remover o único endereço de cobrança!", null);
+        //checking if the address is the billing address
+        if(billingAddress != null){
+            //if was the same address
+            if(billingAddress.getId() == Long.parseLong(address.address().id())){
+                if(!address.address().addressCategories().contains(AddressCategory.BILLING.getCategory().toUpperCase()) && addresses.size() == 1){
+                    return new ResponseDTO(HttpStatus.BAD_REQUEST.toString(), "Este é o único endereço cadastrado e de cobrança, deve ter pelo menos um endereço de cobrança!", null);
+                }
+
+                //if the address is not more the billing address and there are more than one address
+                if(!address.address().addressCategories().contains(AddressCategory.BILLING.getCategory().toUpperCase()) && addresses.size() > 1){
+                    //switching the billing address
+                    addresses.stream()
+                            .filter(a -> !a.getCategories().contains(AddressCategory.BILLING))
+                            .findFirst()
+                            .ifPresent(a -> {
+                                a.getCategories().add(AddressCategory.BILLING);
+                                addressRepository.save(a);
+                            });
+                }
             }
+
+        }
+
+        //switching the billing address if the new address is billing
+        if(billingAddress != null && address.address().addressCategories().contains(AddressCategory.BILLING.getCategory().toUpperCase())){
+            addresses.stream()
+                    .filter(a -> a.getCategories().contains(AddressCategory.BILLING))
+                    .findFirst()
+                    .ifPresent(a -> {
+                        a.getCategories().remove(AddressCategory.BILLING);
+                        addressRepository.save(a);
+                    });
         }
 
         Address newAddress = new Address(
