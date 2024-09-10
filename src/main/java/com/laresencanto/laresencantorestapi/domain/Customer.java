@@ -43,7 +43,7 @@ public class Customer {
     @JoinColumn(name = "userid")
     private User user;
 
-    @ManyToMany(cascade = CascadeType.PERSIST)
+    @ManyToMany(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
     private Set<Address> address;
 
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
