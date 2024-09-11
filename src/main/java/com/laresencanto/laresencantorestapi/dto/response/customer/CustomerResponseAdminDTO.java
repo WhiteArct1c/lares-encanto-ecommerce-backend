@@ -15,6 +15,7 @@ public record CustomerResponseAdminDTO(
         Gender gender,
         String ranking,
         String userRole,
+        String isActive,
         Set<Address> addresses,
         List<CreditCardResponseDTO> creditCards
 ) {

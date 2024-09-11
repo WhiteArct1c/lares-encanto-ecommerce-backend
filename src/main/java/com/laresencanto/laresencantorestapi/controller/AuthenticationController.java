@@ -13,7 +13,6 @@ import com.laresencanto.laresencantorestapi.repository.CustomerRepository;
 import com.laresencanto.laresencantorestapi.repository.UserRepository;
 import com.laresencanto.laresencantorestapi.security.TokenService;
 import com.laresencanto.laresencantorestapi.service.CustomerService;
-import com.laresencanto.laresencantorestapi.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +33,6 @@ import java.util.stream.Collectors;
 public class AuthenticationController {
 
     private final AuthenticationManager authenticationManager;
-    private final UserService userService;
     private final TokenService tokenService;
     private final CustomerService customerService;
     private final CustomerRepository customerRepository;
@@ -42,14 +40,12 @@ public class AuthenticationController {
 
     public AuthenticationController(
             AuthenticationManager authenticationManager,
-            UserService userService,
             TokenService tokenService,
             UserRepository userRepository,
             CustomerRepository customerRepository,
             CustomerService customerService
     ){
         this.authenticationManager = authenticationManager;
-        this.userService = userService;
         this.tokenService = tokenService;
         this.customerService = customerService;
         this.customerRepository = customerRepository;

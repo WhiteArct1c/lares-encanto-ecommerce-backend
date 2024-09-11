@@ -1,7 +1,5 @@
 package com.laresencanto.laresencantorestapi.service;
 
-import com.laresencanto.laresencantorestapi.dto.request.user.UpdatePasswordRequestDTO;
-import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
 import com.laresencanto.laresencantorestapi.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -11,14 +9,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthorizationService implements UserDetailsService {
 
-    private final UserRepository repository;
+    private final UserRepository userRepository;
 
-    public AuthorizationService(UserRepository repository){
-        this.repository = repository;
+    public AuthorizationService(UserRepository userRepository){
+        this.userRepository = userRepository;
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return repository.findByEmail(username);
+        return userRepository.findByEmail(username);
     }
 }

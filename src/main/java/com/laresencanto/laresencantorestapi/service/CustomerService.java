@@ -82,6 +82,7 @@ public class CustomerService {
                     customer.getGender(),
                     customer.getRanking(),
                     customer.getUser().getRole().name(),
+                    customer.getUser().getIsActive(),
                     customer.getAddress(),
                     null
             ));
