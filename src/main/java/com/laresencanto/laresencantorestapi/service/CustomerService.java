@@ -8,6 +8,7 @@ import com.laresencanto.laresencantorestapi.dto.request.RegisterRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.request.customer.CustomerRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.request.customer.CustomerUpdateRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
+import com.laresencanto.laresencantorestapi.dto.response.customer.CustomerResponseAdminDTO;
 import com.laresencanto.laresencantorestapi.dto.response.customer.CustomerResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.customer.CustomerUpdateResponseDTO;
 import com.laresencanto.laresencantorestapi.exception.CustomerNotFoundException;
@@ -70,24 +71,23 @@ public class CustomerService {
         return new ResponseDTO<>(HttpStatus.CREATED.toString(), "Cliente salvo com sucesso", List.of(response));
     }
 
-    public Page<CustomerResponseDTO> listAllCustomers(Pageable pageable) throws CustomerNotFoundException {
-        Page<CustomerResponseDTO> response = null;
-        try{
-
-            response =  customerRepository.findAll(pageable).map(customer -> new CustomerResponseDTO(
+    public Page<CustomerResponseAdminDTO> listAllCustomers(Pageable pageable) throws CustomerNotFoundException {
+        try {
+            return customerRepository.findAll(pageable).map(customer -> new CustomerResponseAdminDTO(
                     customer.getId(),
                     customer.getFullName(),
                     customer.getCpf(),
                     customer.getBirthDate(),
                     customer.getPhone(),
                     customer.getGender(),
+                    customer.getRanking(),
+                    customer.getUser().getRole().name(),
                     customer.getAddress(),
                     null
             ));
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new CustomerNotFoundException("Nenhum cliente encontrado");
         }
-        return response;
     }
 
     public ResponseDTO<CustomerUpdateResponseDTO> update(CustomerUpdateRequestDTO customerUpdateRequestDTO){
