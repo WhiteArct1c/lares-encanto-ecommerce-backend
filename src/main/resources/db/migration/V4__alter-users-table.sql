@@ -1,0 +1,5 @@
+ALTER TABLE users
+RENAME COLUMN name TO email;
+
+ALTER TABLE users
+ALTER COLUMN email TYPE TEXT;

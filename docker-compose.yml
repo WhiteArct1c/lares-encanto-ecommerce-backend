@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  db:
+    image: postgres
+    volumes:
+      - PGDATA:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: "postgres"
+    ports:
+      - "5433:5432"
+    networks:
+      - laresencanto-docker-network
+
+  pgadmin4:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "laresencantoles@gmail.com"
+      PGADMIN_DEFAULT_PASSWORD: "laresencanto123"
+    ports:
+      - "15432:80"
+    depends_on:
+      - db
+    networks:
+      - laresencanto-docker-network
+
+networks:
+  laresencanto-docker-network:
+    driver: bridge
+
+volumes:
+  PGDATA:
