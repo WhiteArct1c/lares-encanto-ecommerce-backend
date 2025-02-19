@@ -1,0 +1,2 @@
+ALTER TABLE products
+    ADD COLUMN type VARCHAR(100) NOT NULL DEFAULT 'Outro';
