@@ -8,6 +8,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,13 +20,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class WebSecurityConfig {
 
     private final AuthenticationConfiguration authConfiguration;
-
     private final SecurityFilter securityFilter;
 
-    public WebSecurityConfig(
-            AuthenticationConfiguration authConfiguration,
-            SecurityFilter securityFilter
-    ) {
+    public WebSecurityConfig(AuthenticationConfiguration authConfiguration, SecurityFilter securityFilter) {
         this.authConfiguration = authConfiguration;
         this.securityFilter = securityFilter;
     }
@@ -36,7 +33,7 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder(){
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
@@ -45,23 +42,44 @@ public class WebSecurityConfig {
         return httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
-
-                        .requestMatchers(HttpMethod.PUT, "/customers").hasRole("USER")
-                        
-                        .requestMatchers(HttpMethod.GET, "/credit-card/{id}").hasRole("USER")
-                        .requestMatchers(HttpMethod.GET, "/credit-card/list-all").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/credit-card/create-card").hasRole("USER")
-                        .requestMatchers(HttpMethod.PUT, "/credit-card/update-card").hasRole("USER")
-                        .requestMatchers(HttpMethod.DELETE, "/credit-card/delete-card/{id}").hasRole("USER")
-                        
-                        .requestMatchers(HttpMethod.GET, "/customers").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/customers").hasRole("ADMIN")
-                        .anyRequest().permitAll()
-                )
+                .authorizeHttpRequests(authorize -> {
+                    configureAuthEndpoints(authorize);
+                    configureCustomerEndpoints(authorize);
+                    configureCreditCardEndpoints(authorize);
+                    configureProductEndpoints(authorize);
+                    authorize.anyRequest().permitAll(); // Libera qualquer outra requisição
+                })
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
+    }
+
+    private void configureAuthEndpoints(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry authorize) {
+        authorize
+                .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/auth/register").permitAll();
+    }
+
+    private void configureCustomerEndpoints(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry authorize) {
+        authorize
+                .requestMatchers(HttpMethod.GET, "/customers").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/customers").hasAnyRole("ADMIN", "USER");
+    }
+
+    private void configureCreditCardEndpoints(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry authorize) {
+        authorize
+                .requestMatchers(HttpMethod.GET, "/credit-card/{id}").hasRole("USER")
+                .requestMatchers(HttpMethod.GET, "/credit-card/list-all").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/credit-card/create-card").hasRole("USER")
+                .requestMatchers(HttpMethod.PUT, "/credit-card/update-card").hasRole("USER")
+                .requestMatchers(HttpMethod.DELETE, "/credit-card/delete-card/{id}").hasRole("USER");
+    }
+
+    private void configureProductEndpoints(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry authorize) {
+        authorize
+                .requestMatchers(HttpMethod.GET, "/products").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/products").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/products/{id}").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/products/{id}/disable").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/products/{id}").hasRole("ADMIN");
     }
 }
