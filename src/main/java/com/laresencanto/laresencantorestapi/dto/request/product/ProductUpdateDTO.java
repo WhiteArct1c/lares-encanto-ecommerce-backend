@@ -12,6 +12,7 @@ public record ProductUpdateDTO(
         MultipartFile image,
         Boolean isActive,
         Integer categoryId,
+        Integer pricingGroupId,
         String type
 ) {
 }

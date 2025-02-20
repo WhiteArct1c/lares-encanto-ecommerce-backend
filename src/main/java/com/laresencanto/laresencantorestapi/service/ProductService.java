@@ -1,18 +1,12 @@
 package com.laresencanto.laresencantorestapi.service;
 
-import com.laresencanto.laresencantorestapi.domain.Product;
-import com.laresencanto.laresencantorestapi.domain.ProductCategory;
-import com.laresencanto.laresencantorestapi.domain.ProductStatusHistory;
-import com.laresencanto.laresencantorestapi.domain.Stock;
+import com.laresencanto.laresencantorestapi.domain.*;
 import com.laresencanto.laresencantorestapi.dto.request.product.ProductCreateDTO;
 import com.laresencanto.laresencantorestapi.dto.request.product.ProductEnableDisableDTO;
 import com.laresencanto.laresencantorestapi.dto.request.product.ProductUpdateDTO;
 import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.product.ProductResponseDTO;
-import com.laresencanto.laresencantorestapi.repository.ProductCategoryRepository;
-import com.laresencanto.laresencantorestapi.repository.ProductRepository;
-import com.laresencanto.laresencantorestapi.repository.ProductStatusHistoryRepository;
-import com.laresencanto.laresencantorestapi.repository.StockRepository;
+import com.laresencanto.laresencantorestapi.repository.*;
 import org.apache.tika.Tika;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
@@ -32,17 +28,20 @@ public class ProductService {
     private final StockRepository stockRepository;
     private final ProductCategoryRepository productCategoryRepository;
     private final ProductStatusHistoryRepository productStatusHistoryRepository;
+    private final PricingGroupRepository pricingGroupRepository;
 
     public ProductService(
             ProductRepository productRepository,
             StockRepository stockRepository,
             ProductCategoryRepository productCategoryRepository,
-            ProductStatusHistoryRepository productStatusHistoryRepository
+            ProductStatusHistoryRepository productStatusHistoryRepository,
+            PricingGroupRepository pricingGroupRepository
     ) {
         this.productRepository = productRepository;
         this.stockRepository = stockRepository;
         this.productCategoryRepository = productCategoryRepository;
         this.productStatusHistoryRepository = productStatusHistoryRepository;
+        this.pricingGroupRepository = pricingGroupRepository;
     }
 
     /**
@@ -135,10 +134,20 @@ public class ProductService {
      */
     public ResponseDTO<ProductResponseDTO> createProduct(ProductCreateDTO dto) {
         Optional<ProductCategory> categoryOpt = productCategoryRepository.findById(dto.categoryId());
+        Optional<PricingGroup> pricingGroupOpt = pricingGroupRepository.findById(dto.pricingGroupId());
+
         if (categoryOpt.isEmpty()) {
             return new ResponseDTO<>(
-                    String.valueOf(HttpStatus.BAD_REQUEST.value()),
+                    String.valueOf(HttpStatus.NOT_FOUND.value()),
                     "Categoria não encontrada.",
+                    null
+            );
+        }
+
+        if (pricingGroupOpt.isEmpty()) {
+            return new ResponseDTO<>(
+                    String.valueOf(HttpStatus.NOT_FOUND.value()),
+                    "Grupo de precificação não encontrado.",
                     null
             );
         }
@@ -150,7 +159,15 @@ public class ProductService {
         product.setColor(dto.color());
         product.setIsActive(true);
         product.setCategory(categoryOpt.get());
+        product.setPricingGroup(pricingGroupOpt.get());
         product.setType(dto.type());
+        //Calcula preço de venda com base no grupo de precificação
+        product.setSalePrice(
+                calculateSalePrice(
+                        product.getPrice(),
+                        BigDecimal.valueOf(product.getPricingGroup().getProfitMargin())
+                )
+        );
 
         MultipartFile imageFile = dto.image();
         if (imageFile != null && !imageFile.isEmpty()) {
@@ -188,10 +205,29 @@ public class ProductService {
      */
     public ResponseDTO<ProductResponseDTO> updateProduct(Integer id, ProductUpdateDTO dto) {
         Optional<Product> productOpt = productRepository.findById(Long.valueOf(id));
+        Optional<ProductCategory> categoryOpt = productCategoryRepository.findById(dto.categoryId());
+        Optional<PricingGroup> pricingGroupOpt = pricingGroupRepository.findById(dto.pricingGroupId());
+
         if (productOpt.isEmpty()) {
             return new ResponseDTO<>(
                     String.valueOf(HttpStatus.NOT_FOUND.value()),
                     "Produto não encontrado.",
+                    null
+            );
+        }
+
+        if (categoryOpt.isEmpty()) {
+            return new ResponseDTO<>(
+                    String.valueOf(HttpStatus.NOT_FOUND.value()),
+                    "Categoria não encontrada.",
+                    null
+            );
+        }
+
+        if (pricingGroupOpt.isEmpty()) {
+            return new ResponseDTO<>(
+                    String.valueOf(HttpStatus.NOT_FOUND.value()),
+                    "Grupo de precificação não encontrado.",
                     null
             );
         }
@@ -202,19 +238,17 @@ public class ProductService {
         product.setPrice(dto.price());
         product.setColor(dto.color());
         product.setIsActive(dto.isActive());
+        product.setCategory(categoryOpt.get());
+        product.setPricingGroup(pricingGroupOpt.get());
         product.setType(dto.type());
+        //Calcula preço de venda com base no grupo de precificação
+        product.setSalePrice(
+                calculateSalePrice(
+                        product.getPrice(),
+                        BigDecimal.valueOf(product.getPricingGroup().getProfitMargin())
+                )
+        );
 
-        if (dto.categoryId() != null) {
-            Optional<ProductCategory> categoryOpt = productCategoryRepository.findById(dto.categoryId());
-            if (categoryOpt.isEmpty()) {
-                return new ResponseDTO<>(
-                        String.valueOf(HttpStatus.BAD_REQUEST.value()),
-                        "Categoria não encontrada.",
-                        null
-                );
-            }
-            product.setCategory(categoryOpt.get());
-        }
 
         MultipartFile imageFile = dto.image();
         if (imageFile != null && !imageFile.isEmpty()) {
@@ -347,6 +381,21 @@ public class ProductService {
     }
 
     /**
+     * Calculates the sale price using the price and the pricing group profit margin
+     *
+     * @param price The product price without the profit margin
+     * @param profitMargin The % of the pricing group profit margin
+     * @return the product's sale price
+     */
+    private BigDecimal calculateSalePrice (BigDecimal price, BigDecimal profitMargin){
+        BigDecimal factorMarge = profitMargin
+                .divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP)
+                .add(BigDecimal.ONE);
+
+        return price.multiply(factorMarge).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    /**
      * Converts a Product entity to a ProductResponseDTO.
      *
      * @param product the product entity to convert.
@@ -362,10 +411,12 @@ public class ProductService {
                 product.getName(),
                 product.getDescription(),
                 product.getPrice(),
+                product.getSalePrice(),
                 product.getColor(),
                 convertByteToBase64String(product.getImage()),
                 product.getIsActive(),
                 product.getCategory().getName(),
+                product.getPricingGroup().getProfitMargin()+"% - "+product.getPricingGroup().getName(),
                 product.getType(),
                 stockQuantity
         );

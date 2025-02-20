@@ -11,6 +11,7 @@ public record ProductCreateDTO(
         String color,
         MultipartFile image,
         Integer categoryId,
+        Integer pricingGroupId,
         String type,
         Integer initialStockQuantity
 ){}

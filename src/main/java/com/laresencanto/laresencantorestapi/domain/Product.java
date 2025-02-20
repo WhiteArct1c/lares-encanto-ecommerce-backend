@@ -28,6 +28,9 @@ public class Product {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
+    @Column(name = "sale_price", nullable = false, precision = 10, scale = 2)
+    private BigDecimal salePrice;
+
     @Column(nullable = false, length = 100)
     private String type;
 
@@ -50,4 +53,8 @@ public class Product {
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
     private ProductCategory category;
+
+    @ManyToOne
+    @JoinColumn(name = "pricing_group_id", nullable = false)
+    private PricingGroup pricingGroup;
 }
