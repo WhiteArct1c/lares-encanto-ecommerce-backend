@@ -79,7 +79,8 @@ public class WebSecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/products").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/products").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/products/{id}").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PATCH, "/products/{id}/disable").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/products/enable").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/products/disable").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/products/{id}").hasRole("ADMIN");
     }
 }

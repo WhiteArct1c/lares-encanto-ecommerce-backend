@@ -2,13 +2,16 @@ package com.laresencanto.laresencantorestapi.service;
 
 import com.laresencanto.laresencantorestapi.domain.Product;
 import com.laresencanto.laresencantorestapi.domain.ProductCategory;
+import com.laresencanto.laresencantorestapi.domain.ProductStatusHistory;
 import com.laresencanto.laresencantorestapi.domain.Stock;
 import com.laresencanto.laresencantorestapi.dto.request.product.ProductCreateDTO;
+import com.laresencanto.laresencantorestapi.dto.request.product.ProductEnableDisableDTO;
 import com.laresencanto.laresencantorestapi.dto.request.product.ProductUpdateDTO;
 import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.product.ProductResponseDTO;
 import com.laresencanto.laresencantorestapi.repository.ProductCategoryRepository;
 import com.laresencanto.laresencantorestapi.repository.ProductRepository;
+import com.laresencanto.laresencantorestapi.repository.ProductStatusHistoryRepository;
 import com.laresencanto.laresencantorestapi.repository.StockRepository;
 import org.apache.tika.Tika;
 import org.springframework.data.domain.Page;
@@ -26,19 +29,20 @@ import java.util.Optional;
 public class ProductService {
 
     private final ProductRepository productRepository;
-
     private final StockRepository stockRepository;
-    
     private final ProductCategoryRepository productCategoryRepository;
+    private final ProductStatusHistoryRepository productStatusHistoryRepository;
 
     public ProductService(
             ProductRepository productRepository,
             StockRepository stockRepository,
-            ProductCategoryRepository productCategoryRepository
+            ProductCategoryRepository productCategoryRepository,
+            ProductStatusHistoryRepository productStatusHistoryRepository
     ) {
         this.productRepository = productRepository;
         this.stockRepository = stockRepository;
         this.productCategoryRepository = productCategoryRepository;
+        this.productStatusHistoryRepository = productStatusHistoryRepository;
     }
 
     /**
@@ -88,7 +92,7 @@ public class ProductService {
      * @param pageable pagination and sorting information.
      * @return a paginated list of available products.
      */
-    public ResponseDTO<ProductResponseDTO> getAvailableProducts(Pageable pageable) {
+    public ResponseDTO<ProductResponseDTO> getAllAvailableProducts(Pageable pageable) {
         Page<ProductResponseDTO> productPage = productRepository.findAvailableProducts(pageable)
                 .map(this::convertToDTO);
 
@@ -105,7 +109,7 @@ public class ProductService {
      * @param id - the available product id
      * @return the product on ResponseDTO
      */
-    public ResponseDTO<ProductResponseDTO> getAvailableProductsById(Long id) {
+    public ResponseDTO<ProductResponseDTO> getAvailableProductById(Long id) {
         Optional<Product> product = productRepository.findAvailableProductById(id);
         if (product.isPresent()) {
             ProductResponseDTO productResponseDTO = convertToDTO(product.get());
@@ -234,24 +238,81 @@ public class ProductService {
         );
     }
 
+
+    /**
+     * Enables a product by stting its active status to true
+     *
+     * @param dto the dto to enable a product which contains an id and a reason
+     */
+    public ResponseDTO<Void> enableProduct(ProductEnableDisableDTO dto) {
+        Optional<Product> productOpt = productRepository.findById(Long.valueOf(dto.id()));
+        if(productOpt.isEmpty()){
+            return new ResponseDTO<>(
+                    String.valueOf(HttpStatus.NOT_FOUND.value()),
+                    "Produto não encontrado.",
+                    null
+            );
+        } else if (productOpt.get().getIsActive()) {
+            return new ResponseDTO<>(
+                    String.valueOf(HttpStatus.NOT_FOUND.value()),
+                    "Produto já se encontra ativado.",
+                    null
+            );
+        }
+
+        Product product = productOpt.get();
+        ProductStatusHistory statusHistory = new ProductStatusHistory();
+
+        statusHistory.setProduct(product);
+        statusHistory.setPreviousStatus(product.getIsActive());
+        product.setIsActive(true);
+        statusHistory.setNewStatus(true);
+        statusHistory.setReason(dto.reason());
+
+        productRepository.save(product);
+        productStatusHistoryRepository.save(statusHistory);
+
+        return new ResponseDTO<>(
+                String.valueOf(HttpStatus.OK.value()),
+                "Produto ativado com sucesso.",
+                null
+        );
+
+    }
+
     /**
      * Disables a product by setting its active status to false (logical deletion).
      *
-     * @param id the ID of the product to be disabled.
+     * @param dto the dto to disable a product which contains an id and a reason
      */
-    public ResponseDTO<Void> disableProduct(Integer id) {
-        Optional<Product> productOpt = productRepository.findById(Long.valueOf(id));
+    public ResponseDTO<Void> disableProduct(ProductEnableDisableDTO dto) {
+        Optional<Product> productOpt = productRepository.findById(Long.valueOf(dto.id()));
         if (productOpt.isEmpty()) {
             return new ResponseDTO<>(
                     String.valueOf(HttpStatus.NOT_FOUND.value()),
                     "Produto não encontrado.",
                     null
             );
+        } else if (!productOpt.get().getIsActive()) {
+            return new ResponseDTO<>(
+                    String.valueOf(HttpStatus.NOT_FOUND.value()),
+                    "Produto já se encontra desativado.",
+                    null
+            );
         }
 
+
         Product product = productOpt.get();
+        ProductStatusHistory statusHistory = new ProductStatusHistory();
+
+        statusHistory.setProduct(product);
+        statusHistory.setPreviousStatus(product.getIsActive());
         product.setIsActive(false);
+        statusHistory.setNewStatus(false);
+        statusHistory.setReason(dto.reason());
+
         productRepository.save(product);
+        productStatusHistoryRepository.save(statusHistory);
 
         return new ResponseDTO<>(
                 String.valueOf(HttpStatus.OK.value()),

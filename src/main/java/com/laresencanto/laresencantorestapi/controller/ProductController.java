@@ -1,6 +1,7 @@
 package com.laresencanto.laresencantorestapi.controller;
 
 import com.laresencanto.laresencantorestapi.dto.request.product.ProductCreateDTO;
+import com.laresencanto.laresencantorestapi.dto.request.product.ProductEnableDisableDTO;
 import com.laresencanto.laresencantorestapi.dto.request.product.ProductUpdateDTO;
 import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.product.ProductResponseDTO;
@@ -29,13 +30,13 @@ public class ProductController {
     }
 
     @GetMapping("/available")
-    public ResponseDTO<ProductResponseDTO> getAvailableProducts(Pageable pageable) {
-        return productService.getAvailableProducts(pageable);
+    public ResponseDTO<ProductResponseDTO> getAllAvailableProducts(Pageable pageable) {
+        return productService.getAllAvailableProducts(pageable);
     }
 
     @GetMapping("/available/{id}")
     public ResponseDTO<ProductResponseDTO> getAvailableProductById(@PathVariable Long id) {
-        return productService.getAvailableProductsById(id);
+        return productService.getAvailableProductById(id);
     }
 
     @PostMapping(consumes = {"multipart/form-data"})
@@ -48,9 +49,14 @@ public class ProductController {
         return productService.updateProduct(id, dto);
     }
 
-    @PatchMapping("/{id}/disable")
-    public ResponseDTO<Void> disableProduct(@PathVariable Integer id) {
-        return productService.disableProduct(id);
+    @PatchMapping("/disable")
+    public ResponseDTO<Void> disableProduct(@RequestBody ProductEnableDisableDTO dto) {
+        return productService.disableProduct(dto);
+    }
+
+    @PatchMapping("/enable")
+    public ResponseDTO<Void> enableProduct(@RequestBody ProductEnableDisableDTO dto) {
+        return productService.enableProduct(dto);
     }
 
     @DeleteMapping("/{id}")
