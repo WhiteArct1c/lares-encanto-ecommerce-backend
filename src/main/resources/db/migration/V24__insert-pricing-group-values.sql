@@ -1,4 +1,4 @@
-INSERT INTO pricing_group (name, profit_margin) VALUES
+INSERT INTO pricing_groups (name, profit_margin) VALUES
     ('Standard', 10.00), -- Margem de lucro de 10%.
     ('Premium', 20.00), --  Margem de lucro de 20%, para produtos mais sofisticados.
     ('Luxury', 30.00), -- Margem de 30%, para produtos de alto valor agregado.

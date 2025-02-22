@@ -5,6 +5,6 @@ CREATE TABLE product_status_history (
     new_status BOOLEAN NOT NULL, -- Estado novo (true = ativo, false = inativo)
     reason TEXT, -- Motivo da alteração
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT fk_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE
 );
