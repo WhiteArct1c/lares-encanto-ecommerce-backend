@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -37,17 +39,18 @@ public class Product {
     @Column(length = 50)
     private String color;
 
-    @Lob
-    @Column(columnDefinition = "BYTEA")
+    @Column(columnDefinition = "bytea")
     private byte[] image;
 
     @Column(nullable = false)
     private Boolean isActive;
 
-    @Column(nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @CreatedDate
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+    @LastModifiedDate
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
     @ManyToOne
@@ -55,6 +58,6 @@ public class Product {
     private ProductCategory category;
 
     @ManyToOne
-    @JoinColumn(name = "pricing_group_id", nullable = false)
+    @JoinColumn(name = "pricing_groups_id", nullable = false)
     private PricingGroup pricingGroup;
 }
