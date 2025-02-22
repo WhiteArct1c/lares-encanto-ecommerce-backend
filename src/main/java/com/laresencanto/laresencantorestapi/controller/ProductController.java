@@ -7,7 +7,11 @@ import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.product.ProductResponseDTO;
 import com.laresencanto.laresencantorestapi.service.ProductService;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.math.BigDecimal;
 
 @RestController
 @RequestMapping("/products")
@@ -39,12 +43,33 @@ public class ProductController {
         return productService.getAvailableProductById(id);
     }
 
-    @PostMapping(consumes = {"multipart/form-data"})
-    public ResponseDTO<ProductResponseDTO> createProduct(@RequestBody ProductCreateDTO dto) {
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseDTO<ProductResponseDTO> createProduct(
+            @RequestParam("name") String name,
+            @RequestParam("description") String description,
+            @RequestParam("price") double price,
+            @RequestParam("color") String color,
+            @RequestParam("categoryId") Long categoryId,
+            @RequestParam("pricingGroupId") Long pricingGroupId,
+            @RequestParam("type") String type,
+            @RequestParam("initialStockQuantity") int initialStockQuantity,
+            @RequestParam(value = "image") MultipartFile image // O arquivo é opcional
+    ) {
+        ProductCreateDTO dto = new ProductCreateDTO(
+                name,
+                description,
+                BigDecimal.valueOf(price),
+                color,
+                image,
+                Math.toIntExact(categoryId),
+                Math.toIntExact(pricingGroupId),
+                type,
+                initialStockQuantity
+        );
         return productService.createProduct(dto);
     }
 
-    @PutMapping(value = "/{id}", consumes = {"multipart/form-data"})
+    @PutMapping(value = "/{id}")
     public ResponseDTO<ProductResponseDTO> updateProduct(@PathVariable Integer id, @RequestBody ProductUpdateDTO dto) {
         return productService.updateProduct(id, dto);
     }
