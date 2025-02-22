@@ -54,7 +54,7 @@ public class ProductService {
                 .map(this::convertToDTO);
 
         return new ResponseDTO<>(
-                String.valueOf(HttpStatus.OK.value()),
+                HttpStatus.OK.toString(),
                 "Todos os produtos retornados com sucesso.",
                 productPage.getContent()
         );
@@ -72,14 +72,14 @@ public class ProductService {
             ProductResponseDTO productResponseDTO = convertToDTO(product.get());
 
             return new ResponseDTO<>(
-                    String.valueOf(HttpStatus.OK.value()),
+                    HttpStatus.OK.toString(),
                     "Produto encontrado.",
                     List.of(productResponseDTO)
             );
         }
 
         return new ResponseDTO<>(
-                String.valueOf(HttpStatus.NOT_FOUND.value()),
+                HttpStatus.NOT_FOUND.toString(),
                 "Produto não encontrado.",
                 null
         );
@@ -96,7 +96,7 @@ public class ProductService {
                 .map(this::convertToDTO);
 
         return new ResponseDTO<>(
-                String.valueOf(HttpStatus.OK.value()),
+                HttpStatus.OK.toString(),
                 "Produtos disponíveis retornados com sucesso.",
                 productPage.getContent()
         );
@@ -113,14 +113,14 @@ public class ProductService {
         if (product.isPresent()) {
             ProductResponseDTO productResponseDTO = convertToDTO(product.get());
             return new ResponseDTO<>(
-                    String.valueOf(HttpStatus.OK.value()),
+                    HttpStatus.OK.toString(),
                     "Produto disponível encontrado.",
                     List.of(productResponseDTO)
             );
         }
 
         return new ResponseDTO<>(
-                String.valueOf(HttpStatus.NOT_FOUND.value()),
+                HttpStatus.NOT_FOUND.toString(),
                 "Produto não disponível ou não encontrado.",
                 null
         );
@@ -138,7 +138,7 @@ public class ProductService {
 
         if (categoryOpt.isEmpty()) {
             return new ResponseDTO<>(
-                    String.valueOf(HttpStatus.NOT_FOUND.value()),
+                    HttpStatus.NOT_FOUND.toString(),
                     "Categoria não encontrada.",
                     null
             );
@@ -146,7 +146,7 @@ public class ProductService {
 
         if (pricingGroupOpt.isEmpty()) {
             return new ResponseDTO<>(
-                    String.valueOf(HttpStatus.NOT_FOUND.value()),
+                    HttpStatus.NOT_FOUND.toString(),
                     "Grupo de precificação não encontrado.",
                     null
             );
@@ -175,7 +175,7 @@ public class ProductService {
                 product.setImage(imageFile.getBytes());
             } catch (IOException e) {
                 return new ResponseDTO<>(
-                        String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value()),
+                        HttpStatus.INTERNAL_SERVER_ERROR.toString(),
                         "Erro ao processar a imagem.",
                         null
                 );
@@ -190,7 +190,7 @@ public class ProductService {
         stockRepository.save(stock);
 
         return new ResponseDTO<>(
-                String.valueOf(HttpStatus.CREATED.value()),
+                HttpStatus.CREATED.toString(),
                 "Produto criado com sucesso.",
                 List.of(convertToDTO(savedProduct))
         );
@@ -210,7 +210,7 @@ public class ProductService {
 
         if (productOpt.isEmpty()) {
             return new ResponseDTO<>(
-                    String.valueOf(HttpStatus.NOT_FOUND.value()),
+                    HttpStatus.NOT_FOUND.toString(),
                     "Produto não encontrado.",
                     null
             );
@@ -218,7 +218,7 @@ public class ProductService {
 
         if (categoryOpt.isEmpty()) {
             return new ResponseDTO<>(
-                    String.valueOf(HttpStatus.NOT_FOUND.value()),
+                    HttpStatus.NOT_FOUND.toString(),
                     "Categoria não encontrada.",
                     null
             );
@@ -226,7 +226,7 @@ public class ProductService {
 
         if (pricingGroupOpt.isEmpty()) {
             return new ResponseDTO<>(
-                    String.valueOf(HttpStatus.NOT_FOUND.value()),
+                    HttpStatus.NOT_FOUND.toString(),
                     "Grupo de precificação não encontrado.",
                     null
             );
@@ -256,7 +256,7 @@ public class ProductService {
                 product.setImage(imageFile.getBytes());
             } catch (IOException e) {
                 return new ResponseDTO<>(
-                        String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value()),
+                        HttpStatus.INTERNAL_SERVER_ERROR.toString(),
                         "Erro ao processar a imagem.",
                         null
                 );
@@ -266,7 +266,7 @@ public class ProductService {
         Product updatedProduct = productRepository.save(product);
 
         return new ResponseDTO<>(
-                String.valueOf(HttpStatus.OK.value()),
+                HttpStatus.OK.toString(),
                 "Produto atualizado com sucesso.",
                 List.of(convertToDTO(updatedProduct))
         );
@@ -282,13 +282,13 @@ public class ProductService {
         Optional<Product> productOpt = productRepository.findById(Long.valueOf(dto.id()));
         if(productOpt.isEmpty()){
             return new ResponseDTO<>(
-                    String.valueOf(HttpStatus.NOT_FOUND.value()),
+                    HttpStatus.NOT_FOUND.toString(),
                     "Produto não encontrado.",
                     null
             );
         } else if (productOpt.get().getIsActive()) {
             return new ResponseDTO<>(
-                    String.valueOf(HttpStatus.NOT_FOUND.value()),
+                    HttpStatus.NOT_FOUND.toString(),
                     "Produto já se encontra ativado.",
                     null
             );
@@ -307,7 +307,7 @@ public class ProductService {
         productStatusHistoryRepository.save(statusHistory);
 
         return new ResponseDTO<>(
-                String.valueOf(HttpStatus.OK.value()),
+                HttpStatus.OK.toString(),
                 "Produto ativado com sucesso.",
                 null
         );
@@ -323,13 +323,13 @@ public class ProductService {
         Optional<Product> productOpt = productRepository.findById(Long.valueOf(dto.id()));
         if (productOpt.isEmpty()) {
             return new ResponseDTO<>(
-                    String.valueOf(HttpStatus.NOT_FOUND.value()),
+                    HttpStatus.NOT_FOUND.toString(),
                     "Produto não encontrado.",
                     null
             );
         } else if (!productOpt.get().getIsActive()) {
             return new ResponseDTO<>(
-                    String.valueOf(HttpStatus.NOT_FOUND.value()),
+                    HttpStatus.NOT_FOUND.toString(),
                     "Produto já se encontra desativado.",
                     null
             );
@@ -349,7 +349,7 @@ public class ProductService {
         productStatusHistoryRepository.save(statusHistory);
 
         return new ResponseDTO<>(
-                String.valueOf(HttpStatus.OK.value()),
+                HttpStatus.OK.toString(),
                 "Produto desativado com sucesso.",
                 null
         );
@@ -364,7 +364,7 @@ public class ProductService {
         Optional<Product> productOpt = productRepository.findById(Long.valueOf(id));
         if (productOpt.isEmpty()) {
             return new ResponseDTO<>(
-                    String.valueOf(HttpStatus.NOT_FOUND.value()),
+                    HttpStatus.NOT_FOUND.toString(),
                     "Produto não encontrado.",
                     null
             );
@@ -374,7 +374,7 @@ public class ProductService {
         productRepository.deleteById(Long.valueOf(id));
 
         return new ResponseDTO<>(
-                String.valueOf(HttpStatus.NO_CONTENT.value()),
+                HttpStatus.NO_CONTENT.toString(),
                 "Produto removido com sucesso.",
                 null
         );
@@ -416,7 +416,7 @@ public class ProductService {
                 convertByteToBase64String(product.getImage()),
                 product.getIsActive(),
                 product.getCategory().getName(),
-                product.getPricingGroup().getProfitMargin()+"% - "+product.getPricingGroup().getName(),
+                product.getPricingGroup().getName()+" - "+product.getPricingGroup().getProfitMargin()+"%",
                 product.getType(),
                 stockQuantity
         );
