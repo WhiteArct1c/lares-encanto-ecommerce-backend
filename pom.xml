@@ -11,7 +11,7 @@
     <groupId>com.laresncanto</groupId>
     <artifactId>lares-encanto-rest-api</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <packaging>war</packaging>
+    <packaging>jar</packaging>
     <name>lares-encanto-rest-api</name>
     <description>lares-encanto-rest-api</description>
     <properties>
