@@ -1,6 +1,7 @@
 services:
   db:
     image: postgres
+    container_name: db
     volumes:
       - PGDATA:/var/lib/postgresql/data
     environment:
@@ -10,6 +11,7 @@ services:
 
   pgadmin4:
     image: dpage/pgadmin4
+    container_name: pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
