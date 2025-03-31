@@ -11,7 +11,7 @@
     <groupId>com.laresncanto</groupId>
     <artifactId>lares-encanto-rest-api</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <packaging>war</packaging>
+    <packaging>jar</packaging>
     <name>lares-encanto-rest-api</name>
     <description>lares-encanto-rest-api</description>
     <properties>
@@ -69,6 +69,12 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <version>2.9.0</version>
         </dependency>
     </dependencies>
 
