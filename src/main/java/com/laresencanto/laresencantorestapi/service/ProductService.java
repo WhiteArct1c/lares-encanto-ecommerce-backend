@@ -5,7 +5,9 @@ import com.laresencanto.laresencantorestapi.dto.request.product.ProductCreateDTO
 import com.laresencanto.laresencantorestapi.dto.request.product.ProductEnableDisableDTO;
 import com.laresencanto.laresencantorestapi.dto.request.product.ProductUpdateDTO;
 import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
+import com.laresencanto.laresencantorestapi.dto.response.pricingGroup.PricingGroupResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.product.ProductResponseDTO;
+import com.laresencanto.laresencantorestapi.dto.response.productCategory.ProductCategoryResponseDTO;
 import com.laresencanto.laresencantorestapi.repository.*;
 import org.apache.tika.Tika;
 import org.springframework.data.domain.Page;
@@ -207,6 +209,7 @@ public class ProductService {
         Optional<Product> productOpt = productRepository.findById(Long.valueOf(id));
         Optional<ProductCategory> categoryOpt = productCategoryRepository.findById(dto.categoryId());
         Optional<PricingGroup> pricingGroupOpt = pricingGroupRepository.findById(dto.pricingGroupId());
+        Optional<Stock> stockOpt = stockRepository.findByProductId(dto.id());
 
         if (productOpt.isEmpty()) {
             return new ResponseDTO<>(
@@ -228,6 +231,14 @@ public class ProductService {
             return new ResponseDTO<>(
                     HttpStatus.NOT_FOUND.toString(),
                     "Grupo de precificação não encontrado.",
+                    null
+            );
+        }
+
+        if (stockOpt.isEmpty()) {
+            return new ResponseDTO<>(
+                    HttpStatus.NOT_FOUND.toString(),
+                    "Estoque do produto não encontrado.",
                     null
             );
         }
@@ -262,6 +273,11 @@ public class ProductService {
                 );
             }
         }
+
+        // Update stock quantity
+        Stock stock = stockOpt.get();
+        stock.setQuantity(dto.stockQuantity());
+        stockRepository.save(stock);
 
         Product updatedProduct = productRepository.save(product);
 
@@ -406,6 +422,17 @@ public class ProductService {
                 .map(Stock::getQuantity)
                 .orElse(0);
 
+        PricingGroupResponseDTO pricingGroup = new PricingGroupResponseDTO(
+                product.getPricingGroup().getId(),
+                product.getPricingGroup().getName(),
+                product.getPricingGroup().getProfitMargin()
+        );
+
+        ProductCategoryResponseDTO productCategory = new ProductCategoryResponseDTO(
+                product.getCategory().getId(),
+                product.getCategory().getName()
+        );
+
         return new ProductResponseDTO(
                 product.getId(),
                 product.getName(),
@@ -415,8 +442,8 @@ public class ProductService {
                 product.getColor(),
                 convertByteToBase64String(product.getImage()),
                 product.getIsActive(),
-                product.getCategory().getName(),
-                product.getPricingGroup().getName()+" - "+product.getPricingGroup().getProfitMargin()+"%",
+                productCategory,
+                pricingGroup,
                 product.getType(),
                 stockQuantity
         );
