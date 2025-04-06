@@ -1,5 +1,8 @@
 package com.laresencanto.laresencantorestapi.dto.response.product;
 
+import com.laresencanto.laresencantorestapi.dto.response.pricingGroup.PricingGroupResponseDTO;
+import com.laresencanto.laresencantorestapi.dto.response.productCategory.ProductCategoryResponseDTO;
+
 import java.math.BigDecimal;
 
 public record ProductResponseDTO(
@@ -11,8 +14,8 @@ public record ProductResponseDTO(
         String color,
         String image,
         Boolean isActive,
-        String categoryName,
-        String pricingGroup,
+        ProductCategoryResponseDTO category,
+        PricingGroupResponseDTO pricingGroup,
         String type,
         Integer stockQuantity
 ) {

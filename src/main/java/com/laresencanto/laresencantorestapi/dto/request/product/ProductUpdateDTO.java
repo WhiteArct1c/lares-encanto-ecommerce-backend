@@ -5,6 +5,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
 
 public record ProductUpdateDTO(
+        Integer id,
         String name,
         String description,
         BigDecimal price,
@@ -13,6 +14,7 @@ public record ProductUpdateDTO(
         Boolean isActive,
         Integer categoryId,
         Integer pricingGroupId,
+        Integer stockQuantity,
         String type
 ) {
 }
