@@ -1,7 +1,7 @@
 package com.laresencanto.laresencantorestapi.dto.response.customer;
 
-import com.laresencanto.laresencantorestapi.domain.Address;
-import com.laresencanto.laresencantorestapi.domain.Gender;
+import com.laresencanto.laresencantorestapi.domain.address.Address;
+import com.laresencanto.laresencantorestapi.domain.customer.Gender;
 
 import java.util.List;
 import java.util.Set;

@@ -4,12 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.laresencanto.laresencantorestapi.dto.CustomerAuthDTO;
+import com.laresencanto.laresencantorestapi.repository.CustomerRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import com.laresencanto.laresencantorestapi.domain.CreditCard;
-import com.laresencanto.laresencantorestapi.domain.Customer;
+import com.laresencanto.laresencantorestapi.domain.creditCard.CreditCard;
+import com.laresencanto.laresencantorestapi.domain.customer.Customer;
 import com.laresencanto.laresencantorestapi.dto.request.customer.CreditCardRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.customer.CreditCardResponseDTO;
@@ -20,20 +22,23 @@ import com.laresencanto.laresencantorestapi.validation.CreditCardValidation;
 public class CreditCardService {
 
     private final CreditCardValidation creditCardValidation;
-
     private final CreditCardRepository creditCardRepository;
+    private final CustomerRepository customerRepository;
 
 
     public CreditCardService(
             CreditCardValidation creditCardValidation,
-            CreditCardRepository creditCardRepository
+            CreditCardRepository creditCardRepository,
+            CustomerRepository customerRepository
     ) {
         this.creditCardValidation = creditCardValidation;
         this.creditCardRepository = creditCardRepository;
+        this.customerRepository = customerRepository;
     }
 
     public ResponseDTO<CreditCardResponseDTO> getCreditCardById(Long id){
-        Customer customer = (Customer) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        CustomerAuthDTO customerAuth = (CustomerAuthDTO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Customer customer = customerRepository.findById(customerAuth.id()).orElseThrow();
         Optional<CreditCard> creditCard = creditCardRepository.findByIdAndCustomerId(id, customer.getId());
 
         if(creditCard.isEmpty()){
@@ -62,7 +67,8 @@ public class CreditCardService {
     }
 
     public ResponseDTO<CreditCardResponseDTO> createCreditCard(CreditCardRequestDTO creditCardRequestDTO){
-        Customer customer = (Customer) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        CustomerAuthDTO customerAuth = (CustomerAuthDTO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Customer customer = customerRepository.findById(customerAuth.id()).orElseThrow();
 
         String errors = creditCardValidation.validateCreditCardRequestRules(creditCardRequestDTO);
 
@@ -117,7 +123,8 @@ public class CreditCardService {
     }
 
     public ResponseDTO<CreditCardResponseDTO> updateCreditCard(Long id, CreditCardRequestDTO creditCardRequestDTO) {
-        Customer customer = (Customer) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        CustomerAuthDTO customerAuth = (CustomerAuthDTO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Customer customer = customerRepository.findById(customerAuth.id()).orElseThrow();
         Optional<CreditCard> creditCard = creditCardRepository.findByIdAndCustomerId(id, customer.getId());
 
         String errors = creditCardValidation.validateCreditCardRequestRules(creditCardRequestDTO);
@@ -182,7 +189,8 @@ public class CreditCardService {
     }
 
     public ResponseDTO<CreditCardResponseDTO> deleteCreditCard(Long id){
-        Customer customer = (Customer) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        CustomerAuthDTO customerAuth = (CustomerAuthDTO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Customer customer = customerRepository.findById(customerAuth.id()).orElseThrow();
         Optional<CreditCard> creditCard = creditCardRepository.findByIdAndCustomerId(id, customer.getId());
         List<CreditCard> customerCreditCards = creditCardRepository.findAllByCustomerId(customer.getId());
 
@@ -229,7 +237,8 @@ public class CreditCardService {
     }
 
     public ResponseDTO<CreditCardResponseDTO> listAllByCustomer() {
-        Customer customer = (Customer) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        CustomerAuthDTO customerAuth = (CustomerAuthDTO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Customer customer = customerRepository.findById(customerAuth.id()).orElseThrow();
         List<CreditCardResponseDTO> response = new ArrayList<>();
 
         try{

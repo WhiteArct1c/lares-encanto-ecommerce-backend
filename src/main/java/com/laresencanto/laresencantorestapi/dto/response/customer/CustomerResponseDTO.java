@@ -1,7 +1,7 @@
 package com.laresencanto.laresencantorestapi.dto.response.customer;
 
-import com.laresencanto.laresencantorestapi.domain.Address;
-import com.laresencanto.laresencantorestapi.domain.Gender;
+import com.laresencanto.laresencantorestapi.domain.customer.Gender;
+import com.laresencanto.laresencantorestapi.dto.response.address.AddressResponseDTO;
 
 import java.util.List;
 import java.util.Set;
@@ -13,7 +13,7 @@ public record CustomerResponseDTO(
         String birthDate,
         String phone,
         Gender gender,
-        Set<Address> addresses,
+        Set<AddressResponseDTO> addresses,
         List<CreditCardResponseDTO> creditCards
 ) {
 }

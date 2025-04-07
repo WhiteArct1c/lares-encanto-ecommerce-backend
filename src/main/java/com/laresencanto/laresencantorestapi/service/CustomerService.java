@@ -1,19 +1,22 @@
 package com.laresencanto.laresencantorestapi.service;
 
-import com.laresencanto.laresencantorestapi.domain.Address;
-import com.laresencanto.laresencantorestapi.domain.Customer;
-import com.laresencanto.laresencantorestapi.domain.Gender;
-import com.laresencanto.laresencantorestapi.domain.User;
+import com.laresencanto.laresencantorestapi.domain.address.Address;
+import com.laresencanto.laresencantorestapi.domain.customer.Customer;
+import com.laresencanto.laresencantorestapi.domain.customer.Gender;
+import com.laresencanto.laresencantorestapi.domain.user.User;
+import com.laresencanto.laresencantorestapi.dto.CustomerAuthDTO;
 import com.laresencanto.laresencantorestapi.dto.request.RegisterRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.request.customer.CustomerRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.request.customer.CustomerUpdateRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
+import com.laresencanto.laresencantorestapi.dto.response.address.AddressResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.customer.CustomerResponseAdminDTO;
 import com.laresencanto.laresencantorestapi.dto.response.customer.CustomerResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.customer.CustomerUpdateResponseDTO;
 import com.laresencanto.laresencantorestapi.exception.CustomerNotFoundException;
 import com.laresencanto.laresencantorestapi.repository.CustomerRepository;
 import com.laresencanto.laresencantorestapi.repository.GenderRepository;
+import com.laresencanto.laresencantorestapi.repository.UserRepository;
 import com.laresencanto.laresencantorestapi.utils.enums.AddressCategory;
 import com.laresencanto.laresencantorestapi.utils.enums.UserRole;
 import com.laresencanto.laresencantorestapi.validation.UserValidation;
@@ -28,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class CustomerService {
@@ -35,14 +39,16 @@ public class CustomerService {
     private final CustomerRepository customerRepository;
     private final GenderRepository genderRepository;
     private final UserValidation userValidation = new UserValidation();
+    private final UserRepository userRepository;
 
     public CustomerService(
             CustomerRepository customerRepository,
-            GenderRepository genderRepository
+            GenderRepository genderRepository,
 
-    ){
+            UserRepository userRepository){
         this.customerRepository = customerRepository;
         this.genderRepository = genderRepository;
+        this.userRepository = userRepository;
     }
 
     public ResponseDTO<CustomerResponseDTO> saveCustomer(CustomerRequestDTO customerRequestDTO){
@@ -50,6 +56,14 @@ public class CustomerService {
 
         if(!errors.isEmpty()){
             return new ResponseDTO<>(HttpStatus.BAD_REQUEST.toString(), errors, null);
+        }
+
+        if(customerRepository.existsByCpf(customerRequestDTO.cpf())){
+            return new ResponseDTO<>(HttpStatus.BAD_REQUEST.toString(), "Já existe um cliente cadastrado com esse CPF", null);
+        }
+
+        if(userRepository.existsByEmail(customerRequestDTO.user().email())){
+            return new ResponseDTO<>(HttpStatus.BAD_REQUEST.toString(), "Já existe um usuário cadastrado com esse e-mail", null);
         }
 
         Customer customer = saveCustomerRequestMapper(customerRequestDTO);
@@ -64,7 +78,21 @@ public class CustomerService {
                 newCustomer.getBirthDate(),
                 newCustomer.getPhone(),
                 newCustomer.getGender(),
-                newCustomer.getAddress(),
+                newCustomer.getAddress().stream().map(ad -> new AddressResponseDTO(
+                        ad.getId(),
+                        ad.getTitle(),
+                        ad.getCep(),
+                        ad.getResidenceType(),
+                        ad.getAddressType(),
+                        ad.getCategories().stream().map(AddressCategory::toString).collect(Collectors.toSet()),
+                        ad.getStreetName(),
+                        ad.getAddressNumber(),
+                        ad.getNeighborhoods(),
+                        ad.getCity(),
+                        ad.getState(),
+                        ad.getCountry(),
+                        ad.getObservations()
+                )).collect(Collectors.toSet()),
                 null
         );
 
@@ -92,7 +120,8 @@ public class CustomerService {
     }
 
     public ResponseDTO<CustomerUpdateResponseDTO> update(CustomerUpdateRequestDTO customerUpdateRequestDTO){
-        Customer customer = (Customer) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        CustomerAuthDTO customerAuth = (CustomerAuthDTO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Customer customer = customerRepository.findById(customerAuth.id()).orElseThrow();
         List<CustomerUpdateResponseDTO> response = new ArrayList<>();
         Gender gender = genderRepository.findByName(customerUpdateRequestDTO.gender().name());
 
@@ -144,7 +173,7 @@ public class CustomerService {
         addressCustomer.setCep(customerRequestDTO.address().cep());
         addressCustomer.setResidenceType(customerRequestDTO.address().residenceType());
         addressCustomer.setAddressType(customerRequestDTO.address().addressType());
-        addressCustomer.setCategories(customerRequestDTO.address().addressCategories().stream().map(AddressCategory::fromString).toList());
+        addressCustomer.setCategories(customerRequestDTO.address().addressCategories().stream().map(AddressCategory::fromString).collect(Collectors.toSet()));
         addressCustomer.setStreetName(customerRequestDTO.address().streetName());
         addressCustomer.setAddressNumber(customerRequestDTO.address().addressNumber());
         addressCustomer.setNeighborhoods(customerRequestDTO.address().neighborhoods());

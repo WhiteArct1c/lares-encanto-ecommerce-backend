@@ -1,6 +1,6 @@
 package com.laresencanto.laresencantorestapi.dto.response.customer;
 
-import com.laresencanto.laresencantorestapi.domain.Gender;
+import com.laresencanto.laresencantorestapi.domain.customer.Gender;
 
 public record CustomerUpdateResponseDTO(
         Long id,

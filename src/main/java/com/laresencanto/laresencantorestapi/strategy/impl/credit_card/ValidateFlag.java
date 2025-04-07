@@ -1,6 +1,6 @@
 package com.laresencanto.laresencantorestapi.strategy.impl.credit_card;
 
-import com.laresencanto.laresencantorestapi.domain.CreditCardFlags;
+import com.laresencanto.laresencantorestapi.domain.creditCard.CreditCardFlags;
 import com.laresencanto.laresencantorestapi.dto.request.customer.CreditCardRequestDTO;
 import com.laresencanto.laresencantorestapi.repository.CreditCardFlagsRepository;
 import com.laresencanto.laresencantorestapi.strategy.IStrategy;

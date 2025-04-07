@@ -1,2 +1,0 @@
-ALTER TABLE customer
-ALTER COLUMN birthdate TYPE VARCHAR;

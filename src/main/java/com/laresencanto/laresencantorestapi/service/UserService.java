@@ -1,6 +1,6 @@
 package com.laresencanto.laresencantorestapi.service;
 
-import com.laresencanto.laresencantorestapi.domain.User;
+import com.laresencanto.laresencantorestapi.domain.user.User;
 import com.laresencanto.laresencantorestapi.dto.request.RegisterRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.request.user.UpdatePasswordRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;

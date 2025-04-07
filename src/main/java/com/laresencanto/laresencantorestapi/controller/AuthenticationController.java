@@ -1,11 +1,10 @@
 package com.laresencanto.laresencantorestapi.controller;
 
-import com.laresencanto.laresencantorestapi.domain.Customer;
-import com.laresencanto.laresencantorestapi.domain.User;
+import com.laresencanto.laresencantorestapi.domain.customer.Customer;
+import com.laresencanto.laresencantorestapi.domain.user.User;
 import com.laresencanto.laresencantorestapi.dto.request.AuthenticationDTO;
 import com.laresencanto.laresencantorestapi.dto.request.customer.CustomerRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
-import com.laresencanto.laresencantorestapi.dto.response.customer.CreditCardResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.customer.CustomerResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.error.ResponseErrorDTO;
 import com.laresencanto.laresencantorestapi.dto.response.login.LoginResponseDTO;
@@ -23,10 +22,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/auth")
@@ -97,29 +94,7 @@ public class AuthenticationController {
         ResponseDTO<CustomerResponseDTO> response;
 
         if(customer.isPresent()){
-            CustomerResponseDTO customerResponseDTO = new CustomerResponseDTO(
-                    customer.get().getId(),
-                    customer.get().getFullName(),
-                    customer.get().getCpf(),
-                    customer.get().getBirthDate(),
-                    customer.get().getPhone(),
-                    customer.get().getGender(),
-                    customer.get().getAddress(),
-                    new ArrayList<>(
-                            customer.get().getCreditCardList().stream().map(creditCard ->
-                                    new CreditCardResponseDTO(
-                                        creditCard.getId(),
-                                        creditCard.getCardNumber(),
-                                        creditCard.getCardName(),
-                                        creditCard.getCardCode(),
-                                        creditCard.getCardFlag(),
-                                        creditCard.isMainCard()
-                                    )
-                            ).collect(Collectors.toList())
-                    )
-            );
-
-             response = new ResponseDTO<>(HttpStatus.OK.toString(), "Usuário validado com sucesso!", List.of(customerResponseDTO));
+            response = new ResponseDTO<>(HttpStatus.OK.toString(), "Usuário validado com sucesso!", null);
             return ResponseEntity.ok(response);
         }else{
             response = new ResponseDTO<>(HttpStatus.BAD_REQUEST.toString(), "Erro ao validar usuário!", null);

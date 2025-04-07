@@ -11,7 +11,7 @@ public enum AddressCategory {
     }
 
     public String getCategory() {
-        return category;
+        return this.category;
     }
 
     public static AddressCategory fromString(String category) {

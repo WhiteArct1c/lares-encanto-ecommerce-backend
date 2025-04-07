@@ -2,6 +2,7 @@ package com.laresencanto.laresencantorestapi.controller.error;
 
 import com.laresencanto.laresencantorestapi.dto.response.error.ResponseErrorDTO;
 import com.laresencanto.laresencantorestapi.exception.CustomerNotFoundException;
+import com.laresencanto.laresencantorestapi.exception.EntityNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -57,6 +58,16 @@ public class ApplicationControllerAdvice {
     @ExceptionHandler(CustomerNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseErrorDTO handleCustomerNotFoundException(CustomerNotFoundException ex){
+        return new ResponseErrorDTO(
+                HttpStatus.NOT_FOUND.toString(),
+                ex.getMessage(),
+                null
+        );
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseErrorDTO handleEntityNotFoundException(EntityNotFoundException ex){
         return new ResponseErrorDTO(
                 HttpStatus.NOT_FOUND.toString(),
                 ex.getMessage(),

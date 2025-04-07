@@ -1,3 +1,0 @@
-ALTER TABLE users
-ALTER COLUMN email SET NOT NULL,
-ADD CONSTRAINT unique_email UNIQUE (email);

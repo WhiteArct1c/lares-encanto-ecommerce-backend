@@ -1,2 +1,0 @@
-ALTER TABLE customer
-ADD COLUMN ranking VARCHAR;

@@ -1,6 +1,6 @@
 package com.laresencanto.laresencantorestapi.repository;
 
-import com.laresencanto.laresencantorestapi.domain.Stock;
+import com.laresencanto.laresencantorestapi.domain.product.Stock;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

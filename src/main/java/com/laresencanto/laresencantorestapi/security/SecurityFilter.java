@@ -1,9 +1,13 @@
 package com.laresencanto.laresencantorestapi.security;
 
-import com.laresencanto.laresencantorestapi.domain.Customer;
-import com.laresencanto.laresencantorestapi.domain.User;
+import com.laresencanto.laresencantorestapi.domain.customer.Customer;
+import com.laresencanto.laresencantorestapi.domain.user.User;
+import com.laresencanto.laresencantorestapi.dto.CustomerAuthDTO;
+import com.laresencanto.laresencantorestapi.dto.request.address.AddressRequestDTO;
+import com.laresencanto.laresencantorestapi.dto.response.customer.CreditCardResponseDTO;
 import com.laresencanto.laresencantorestapi.repository.CustomerRepository;
 import com.laresencanto.laresencantorestapi.repository.UserRepository;
+import com.laresencanto.laresencantorestapi.utils.enums.AddressCategory;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 public class SecurityFilter extends OncePerRequestFilter {
@@ -39,16 +44,62 @@ public class SecurityFilter extends OncePerRequestFilter {
             try {
                 var email = tokenService.validateToken(token);
                 User user = userRepository.findByEmail(email);
-                Customer customer = customerRepository.findByUserId(user.getId()).orElse(null);
+                Customer customer = customerRepository.findByUserId(user.getId()).orElseThrow();
 
-                var authentication = new UsernamePasswordAuthenticationToken(customer, null, user.getAuthorities());
+                var authentication = getUsernamePasswordAuthenticationToken(customer, user);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }catch (Exception e) {
                 SecurityContextHolder.clearContext();
                 response.sendError(403, "Invalid token");
+                e.printStackTrace();
             }
         }
         filterChain.doFilter(request, response);
+    }
+
+    protected UsernamePasswordAuthenticationToken getUsernamePasswordAuthenticationToken(Customer customer, User user) {
+        List<AddressRequestDTO> addresses = customer.getAddress()
+                .stream()
+                .map(address -> new AddressRequestDTO(
+                        address.getId().toString(),
+                        address.getTitle(),
+                        address.getCep(),
+                        address.getResidenceType(),
+                        address.getAddressType(),
+                        address.getCategories().stream().map(AddressCategory::getCategory).toList(),
+                        address.getStreetName(),
+                        address.getAddressNumber(),
+                        address.getNeighborhoods(),
+                        address.getCity(),
+                        address.getState(),
+                        address.getCountry(),
+                        address.getObservations()
+                )).toList();
+
+        List<CreditCardResponseDTO> creditCards = customer.getCreditCardList()
+                .stream()
+                .map(creditCard -> new CreditCardResponseDTO(
+                        creditCard.getId(),
+                        creditCard.getCardNumber(),
+                        creditCard.getCardName(),
+                        creditCard.getCardCode(),
+                        creditCard.getCardFlag(),
+                        creditCard.isMainCard()
+                )).toList();
+
+        CustomerAuthDTO customerAuthDTO = new CustomerAuthDTO(
+                customer.getId(),
+                customer.getFullName(),
+                customer.getCpf(),
+                customer.getBirthDate(),
+                customer.getPhone(),
+                customer.getGender(),
+                customer.getRanking(),
+                addresses,
+                creditCards
+        );
+
+        return new UsernamePasswordAuthenticationToken(customerAuthDTO, null, user.getAuthorities());
     }
 
     private String recoverToken(HttpServletRequest request){

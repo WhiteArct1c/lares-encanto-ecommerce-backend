@@ -1,6 +1,6 @@
 package com.laresencanto.laresencantorestapi.service;
 
-import com.laresencanto.laresencantorestapi.domain.*;
+import com.laresencanto.laresencantorestapi.domain.product.*;
 import com.laresencanto.laresencantorestapi.dto.request.product.ProductCreateDTO;
 import com.laresencanto.laresencantorestapi.dto.request.product.ProductEnableDisableDTO;
 import com.laresencanto.laresencantorestapi.dto.request.product.ProductUpdateDTO;
@@ -189,6 +189,7 @@ public class ProductService {
         Stock stock = new Stock();
         stock.setProduct(savedProduct);
         stock.setQuantity(dto.initialStockQuantity());
+        stock.setReservedQuantity(0);
         stockRepository.save(stock);
 
         return new ResponseDTO<>(
@@ -276,6 +277,13 @@ public class ProductService {
 
         // Update stock quantity
         Stock stock = stockOpt.get();
+        if(dto.stockQuantity() < stock.getReservedQuantity()){
+            return new ResponseDTO<>(
+                    HttpStatus.BAD_REQUEST.toString(),
+                    "Quantidade em estoque não pode ser menor que a quantidade reservada.",
+                    null
+            );
+        }
         stock.setQuantity(dto.stockQuantity());
         stockRepository.save(stock);
 

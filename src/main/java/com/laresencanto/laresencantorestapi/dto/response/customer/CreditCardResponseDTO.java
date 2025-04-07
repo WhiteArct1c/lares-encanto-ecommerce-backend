@@ -6,7 +6,6 @@ public record CreditCardResponseDTO(
         String cardName,
         String cardCode,
         String cardFlag,
-
         boolean mainCard
 ) {
 }

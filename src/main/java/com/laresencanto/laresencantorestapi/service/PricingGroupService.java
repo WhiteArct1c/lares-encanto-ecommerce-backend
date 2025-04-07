@@ -1,6 +1,6 @@
 package com.laresencanto.laresencantorestapi.service;
 
-import com.laresencanto.laresencantorestapi.domain.PricingGroup;
+import com.laresencanto.laresencantorestapi.domain.product.PricingGroup;
 import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.pricingGroup.PricingGroupResponseDTO;
 import com.laresencanto.laresencantorestapi.repository.PricingGroupRepository;
