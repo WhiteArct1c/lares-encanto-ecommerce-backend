@@ -69,6 +69,30 @@ public class OrderService {
 
     }
 
+    public ResponseDTO<OrderResponseDTO> listPendingOrders() {
+        List<OrderResponseDTO> orders = orderRepository.findAllByStatusName("EM PROCESSAMENTO")
+                .stream().map(this::convertToOrderResponseDTO).toList();
+
+        return new ResponseDTO<>(
+                HttpStatus.OK.toString(),
+                "Pedidos encontrados com sucesso",
+                orders
+        );
+    }
+
+    public ResponseDTO<OrderResponseDTO> listCustomerOrders() {
+        Customer customer = getAuthenticatedCustomer();
+
+        List<OrderResponseDTO> orders = orderRepository.findAllByCustomerId(customer.getId())
+                .stream().map(this::convertToOrderResponseDTO).toList();
+
+        return new ResponseDTO<>(
+                HttpStatus.OK.toString(),
+                "Pedidos encontrados com sucesso",
+                orders
+        );
+    }
+
     public ResponseDTO<OrderResponseDTO> createOrder(OrderCreateRequestDTO requestDTO) {
         // 1. Validação e obtenção do cliente
         Customer customer = getAuthenticatedCustomer();
@@ -94,7 +118,7 @@ public class OrderService {
                 .getPrincipal();
 
         return customerRepository.findById(customerAuth.id())
-                .orElseThrow(() -> new RuntimeException("Cliente não encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Cliente não encontrado"));
     }
 
     private Order buildOrder(OrderCreateRequestDTO requestDTO, Customer customer) {
@@ -123,7 +147,7 @@ public class OrderService {
     }
 
     private Address buildAddress(Customer customer, Order order, AddressRequestDTO addressDTO) {
-        if(addressDTO.id() == null) {
+        if(addressDTO.id() == null || addressDTO.id().isEmpty()){
             Address newAddress = new Address();
 
             newAddress.setTitle(addressDTO.title());
@@ -367,7 +391,9 @@ public class OrderService {
                         order.getOrderShipment().getDeliveryTime(),
                         order.getOrderShipment().getPrice()
                 ),
-                order.getTotalPrice()
+                order.getTotalPrice(),
+                order.getCreatedAt(),
+                order.getUpdatedAt()
         );
     }
 

@@ -17,9 +17,19 @@ public class OrderController {
         this.orderService = orderService;
     }
 
+    @GetMapping
+    public ResponseDTO<OrderResponseDTO> getCustomerOrders() {
+        return orderService.listCustomerOrders();
+    }
+
     @GetMapping("/all")
     public ResponseDTO<OrderResponseDTO> getAllOrders() {
         return orderService.listAllOrders();
+    }
+
+    @GetMapping("/pending")
+    public ResponseDTO<OrderResponseDTO> getPendingOrders() {
+        return orderService.listPendingOrders();
     }
 
     @PostMapping
