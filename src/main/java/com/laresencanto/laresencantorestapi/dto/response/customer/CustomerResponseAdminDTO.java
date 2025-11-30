@@ -1,7 +1,7 @@
 package com.laresencanto.laresencantorestapi.dto.response.customer;
 
-import com.laresencanto.laresencantorestapi.domain.address.Address;
 import com.laresencanto.laresencantorestapi.domain.customer.Gender;
+import com.laresencanto.laresencantorestapi.dto.response.address.AddressResponseDTO;
 
 import java.util.List;
 import java.util.Set;
@@ -16,7 +16,7 @@ public record CustomerResponseAdminDTO(
         String ranking,
         String userRole,
         String isActive,
-        Set<Address> addresses,
+        Set<AddressResponseDTO> addresses,
         List<CreditCardResponseDTO> creditCards
 ) {
 }

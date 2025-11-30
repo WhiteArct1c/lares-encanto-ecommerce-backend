@@ -101,19 +101,46 @@ public class CustomerService {
 
     public Page<CustomerResponseAdminDTO> listAllCustomers(Pageable pageable) throws CustomerNotFoundException {
         try {
-            return customerRepository.findAll(pageable).map(customer -> new CustomerResponseAdminDTO(
-                    customer.getId(),
-                    customer.getFullName(),
-                    customer.getCpf(),
-                    customer.getBirthDate(),
-                    customer.getPhone(),
-                    customer.getGender(),
-                    customer.getRanking(),
-                    customer.getUser().getRole().name(),
-                    customer.getUser().getIsActive(),
-                    customer.getAddress(),
-                    null
-            ));
+            return customerRepository.findAll(pageable).map(customer -> {
+                // Converte Set<Address> para Set<AddressResponseDTO> para evitar referência circular
+                Set<AddressResponseDTO> addressesDTO = customer.getAddress() != null 
+                    ? customer.getAddress().stream()
+                        .map(address -> new AddressResponseDTO(
+                                address.getId(),
+                                address.getTitle(),
+                                address.getCep(),
+                                address.getResidenceType(),
+                                address.getAddressType(),
+                                address.getCategories() != null 
+                                    ? address.getCategories().stream()
+                                        .map(AddressCategory::toString)
+                                        .collect(Collectors.toSet())
+                                    : Set.of(),
+                                address.getStreetName(),
+                                address.getAddressNumber(),
+                                address.getNeighborhoods(),
+                                address.getState(),
+                                address.getCity(),
+                                address.getCountry(),
+                                address.getObservations()
+                        ))
+                        .collect(Collectors.toSet())
+                    : Set.of();
+                
+                return new CustomerResponseAdminDTO(
+                        customer.getId(),
+                        customer.getFullName(),
+                        customer.getCpf(),
+                        customer.getBirthDate(),
+                        customer.getPhone(),
+                        customer.getGender(),
+                        customer.getRanking(),
+                        customer.getUser().getRole().name(),
+                        customer.getUser().getIsActive(),
+                        addressesDTO,
+                        null
+                );
+            });
         } catch (Exception e) {
             throw new CustomerNotFoundException("Nenhum cliente encontrado");
         }

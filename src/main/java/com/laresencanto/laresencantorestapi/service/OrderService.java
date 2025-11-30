@@ -68,7 +68,7 @@ public class OrderService {
         }
 
         public ResponseDTO<OrderResponseDTO> listAllOrders() {
-                List<OrderResponseDTO> orders = orderRepository.findAll()
+                List<OrderResponseDTO> orders = orderRepository.findAllWithRelations()
                                 .stream().map(this::convertToOrderResponseDTO).toList();
 
                 return new ResponseDTO<>(
@@ -79,13 +79,179 @@ public class OrderService {
         }
 
         public ResponseDTO<OrderResponseDTO> listPendingOrders() {
-                List<OrderResponseDTO> orders = orderRepository.findAllByStatusName("EM PROCESSAMENTO")
+                // Status pendentes: EM PROCESSAMENTO, APROVADO, EM TRANSPORTE, ENTREGUE,
+                // TROCA SOLICITADA, TROCA ACEITA, DEVOLUÇÃO SOLICITADA
+                List<String> pendingStatuses = List.of(
+                                "EM PROCESSAMENTO",
+                                "APROVADO",
+                                "EM TRANSPORTE",
+                                "ENTREGUE",
+                                "TROCA SOLICITADA",
+                                "TROCA ACEITA",
+                                "DEVOLUÇÃO SOLICITADA");
+
+                List<OrderResponseDTO> orders = orderRepository.findAllByStatusNames(pendingStatuses)
                                 .stream().map(this::convertToOrderResponseDTO).toList();
 
                 return new ResponseDTO<>(
                                 HttpStatus.OK.toString(),
-                                "Pedidos encontrados com sucesso",
+                                "Pedidos pendentes encontrados com sucesso",
                                 orders);
+        }
+
+        public ResponseDTO<OrderResponseDTO> listCanceledOrders() {
+                // Status cancelados: REPROVADO, CANCELADO, TROCA RECUSADA, DEVOLUÇÃO RECUSADA
+                List<String> canceledStatuses = List.of(
+                                "REPROVADO",
+                                "CANCELADO",
+                                "TROCA RECUSADA",
+                                "DEVOLUÇÃO RECUSADA");
+
+                List<OrderResponseDTO> orders = orderRepository.findAllByStatusNames(canceledStatuses)
+                                .stream().map(this::convertToOrderResponseDTO).toList();
+
+                return new ResponseDTO<>(
+                                HttpStatus.OK.toString(),
+                                "Pedidos cancelados encontrados com sucesso",
+                                orders);
+        }
+
+        public ResponseDTO<OrderResponseDTO> listFinishedOrders() {
+                // Status finalizados: ENTREGUE, TROCA CONCLUÍDA, DEVOLUÇÃO CONCLUÍDA
+                List<String> finishedStatuses = List.of(
+                                "ENTREGUE",
+                                "TROCA CONCLUÍDA",
+                                "DEVOLUÇÃO CONCLUÍDA");
+
+                List<OrderResponseDTO> orders = orderRepository.findAllByStatusNames(finishedStatuses)
+                                .stream().map(this::convertToOrderResponseDTO).toList();
+
+                return new ResponseDTO<>(
+                                HttpStatus.OK.toString(),
+                                "Pedidos finalizados encontrados com sucesso",
+                                orders);
+        }
+
+        /**
+         * Simula a validação de pagamento para um pedido específico
+         * Aprova ou reprova baseado em uma lógica mockada
+         * 
+         * @param orderId ID do pedido a ser processado
+         * @param approve true para aprovar, false para reprovar (opcional - se não
+         *                informado, usa lógica automática)
+         * @return Pedido atualizado
+         */
+        public ResponseDTO<OrderResponseDTO> mockPaymentValidation(Long orderId, Boolean approve) {
+                Order order = orderRepository.findById(orderId)
+                                .orElseThrow(() -> new EntityNotFoundException("Pedido não encontrado"));
+
+                if (!"EM PROCESSAMENTO".equals(order.getStatus().getName())) {
+                        throw new BusinessException(
+                                        String.format("Pedido não está em processamento. Status atual: %s",
+                                                        order.getStatus().getName()));
+                }
+
+                // Se approve não foi informado, usa lógica mockada automática
+                String newStatus;
+                if (approve != null) {
+                        // Força aprovação ou reprovação conforme solicitado
+                        newStatus = approve ? "APROVADO" : "REPROVADO";
+                } else {
+                        // Lógica mockada: aprova se valor <= 5000, reprova se > 5000
+                        // (pode ser alterada para qualquer outra lógica)
+                        newStatus = order.getTotalPrice() <= 5000.0 ? "APROVADO" : "REPROVADO";
+                }
+
+                OrderStatusUpdateDTO statusUpdate = new OrderStatusUpdateDTO(orderId, newStatus);
+                return updateOrderStatus(statusUpdate);
+        }
+
+        /**
+         * Processa webhook de pagamento (simula como um gateway real enviaria)
+         * Este método simula como um gateway de pagamento (Stripe, Mercado Pago, etc)
+         * notificaria o sistema sobre o status do pagamento
+         * 
+         * @param webhookDTO Dados do webhook de pagamento
+         * @return Pedido atualizado
+         */
+        public ResponseDTO<OrderResponseDTO> processPaymentWebhook(
+                        com.laresencanto.laresencantorestapi.dto.request.payment.PaymentWebhookDTO webhookDTO) {
+                Order order = orderRepository.findById(webhookDTO.orderId())
+                                .orElseThrow(() -> new EntityNotFoundException("Pedido não encontrado"));
+
+                if (!"EM PROCESSAMENTO".equals(order.getStatus().getName())) {
+                        throw new BusinessException(
+                                        String.format("Pedido não está em processamento. Status atual: %s",
+                                                        order.getStatus().getName()));
+                }
+
+                // Converte status do webhook para status do pedido
+                String newStatus;
+                switch (webhookDTO.paymentStatus().toUpperCase()) {
+                        case "APPROVED":
+                        case "PAID":
+                        case "SUCCESS":
+                                newStatus = "APROVADO";
+                                break;
+                        case "REJECTED":
+                        case "FAILED":
+                        case "DECLINED":
+                                newStatus = "REPROVADO";
+                                break;
+                        case "PENDING":
+                        default:
+                                // Mantém em processamento
+                                return new ResponseDTO<>(
+                                                HttpStatus.OK.toString(),
+                                                "Pagamento ainda está pendente",
+                                                List.of(convertToOrderResponseDTO(order)));
+                }
+
+                OrderStatusUpdateDTO statusUpdate = new OrderStatusUpdateDTO(webhookDTO.orderId(), newStatus);
+                return updateOrderStatus(statusUpdate);
+        }
+
+        /**
+         * Processa todos os pedidos pendentes automaticamente
+         * Simula validação de pagamento para todos os pedidos em processamento
+         * 
+         * @param approveAll true para aprovar todos, false para reprovar todos, null
+         *                   para usar lógica automática
+         * @return Lista de pedidos processados
+         */
+        public ResponseDTO<OrderResponseDTO> processAllPendingOrders(Boolean approveAll) {
+                List<Order> pendingOrders = orderRepository.findAllByStatusName("EM PROCESSAMENTO");
+
+                if (pendingOrders.isEmpty()) {
+                        return new ResponseDTO<>(
+                                        HttpStatus.OK.toString(),
+                                        "Nenhum pedido pendente encontrado",
+                                        List.of());
+                }
+
+                List<OrderResponseDTO> processedOrders = new ArrayList<>();
+
+                for (Order order : pendingOrders) {
+                        String newStatus;
+                        if (approveAll != null) {
+                                // Força aprovação ou reprovação conforme solicitado
+                                newStatus = approveAll ? "APROVADO" : "REPROVADO";
+                        } else {
+                                // Lógica mockada: aprova se valor <= 5000, reprova se > 5000
+                                newStatus = order.getTotalPrice() <= 5000.0 ? "APROVADO" : "REPROVADO";
+                        }
+
+                        OrderStatusUpdateDTO statusUpdate = new OrderStatusUpdateDTO(order.getId(), newStatus);
+                        ResponseDTO<OrderResponseDTO> result = updateOrderStatus(statusUpdate);
+                        if (result.data() != null && !result.data().isEmpty()) {
+                                processedOrders.add(result.data().get(0));
+                        }
+                }
+
+                return new ResponseDTO<>(
+                                HttpStatus.OK.toString(),
+                                String.format("%d pedido(s) processado(s) com sucesso", processedOrders.size()),
+                                processedOrders);
         }
 
         public ResponseDTO<OrderResponseDTO> listCustomerOrders() {
@@ -143,21 +309,25 @@ public class OrderService {
                 // Configuração do endereço
                 order.setAddress(buildAddress(customer, order, requestDTO.address()));
 
+                // Salva o pedido primeiro para ter o ID
                 Order savedOrder = orderRepository.save(order);
 
-                // Configuração dos pagamentos
-                order.setOrderPayments(
-                                buildOrderPayments(customer, savedOrder, requestDTO.orderPayments().stream().toList()));
+                // Configuração dos items do pedido (ANTES dos pagamentos e envio)
+                List<OrderProduct> orderProducts = buildOrderProducts(savedOrder,
+                                requestDTO.orderProducts().stream().toList());
+                savedOrder.setOrderProducts(orderProducts);
 
-                // Configuração dos items do pedido
-                order.setOrderProducts(buildOrderProducts(savedOrder, requestDTO.orderProducts().stream().toList()));
+                // Configuração dos pagamentos
+                savedOrder.setOrderPayments(
+                                buildOrderPayments(customer, savedOrder, requestDTO.orderPayments().stream().toList()));
 
                 // Configuração do envio (calcula automaticamente baseado nos produtos e
                 // endereço)
-                order.setOrderShipment(buildOrderShipment(savedOrder, requestDTO.shipping(), requestDTO.address(),
+                savedOrder.setOrderShipment(buildOrderShipment(savedOrder, requestDTO.shipping(), requestDTO.address(),
                                 requestDTO.orderProducts()));
 
-                return order;
+                // Salva novamente para persistir os relacionamentos
+                return orderRepository.save(savedOrder);
         }
 
         private Address buildAddress(Customer customer, Order order, AddressRequestDTO addressDTO) {
@@ -308,10 +478,10 @@ public class OrderService {
                 return orderPaymentRepository.save(payment);
         }
 
-        private Set<OrderProduct> buildOrderProducts(Order order, List<OrderProductResponseDTO> productDTOs) {
+        private List<OrderProduct> buildOrderProducts(Order order, List<OrderProductResponseDTO> productDTOs) {
                 return productDTOs.stream()
                                 .map(productDTO -> buildOrderProduct(order, productDTO))
-                                .collect(Collectors.toSet());
+                                .collect(Collectors.toList());
         }
 
         private OrderProduct buildOrderProduct(Order order, OrderProductResponseDTO productDTO) {

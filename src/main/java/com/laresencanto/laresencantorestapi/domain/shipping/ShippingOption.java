@@ -20,37 +20,36 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 public class ShippingOption {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String name;
+  @Column(nullable = false, unique = true)
+  private String name;
 
-    @Column(name = "delivery_time", nullable = false)
-    private String deliveryTime;
+  @Column(name = "delivery_time", nullable = false)
+  private String deliveryTime;
 
-    @Column(name = "base_price", nullable = false)
-    private Double basePrice;
+  @Column(name = "base_price", nullable = false)
+  private Double basePrice;
 
-    @Column(name = "price_per_kg", nullable = false)
-    private Double pricePerKg;
+  @Column(name = "price_per_kg", nullable = false)
+  private Double pricePerKg;
 
-    @Column(name = "min_weight_kg", nullable = false)
-    private Double minWeightKg;
+  @Column(name = "min_weight_kg", nullable = false)
+  private Double minWeightKg;
 
-    @Column(name = "max_weight_kg", nullable = false)
-    private Double maxWeightKg;
+  @Column(name = "max_weight_kg", nullable = false)
+  private Double maxWeightKg;
 
-    @Column(nullable = false)
-    private Boolean isActive;
+  @Column(nullable = false)
+  private Boolean isActive;
 
-    @CreatedDate
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+  @CreatedDate
+  @Column(nullable = false, updatable = false)
+  private LocalDateTime createdAt;
 
-    @LastModifiedDate
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
+  @LastModifiedDate
+  @Column(nullable = false)
+  private LocalDateTime updatedAt;
 }
-

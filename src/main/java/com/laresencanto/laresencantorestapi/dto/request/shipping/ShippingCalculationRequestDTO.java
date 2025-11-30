@@ -8,11 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import java.util.Set;
 
 public record ShippingCalculationRequestDTO(
-        @NotNull(message = "O endereço de entrega é obrigatório")
-        AddressRequestDTO address,
+    @NotNull(message = "O endereço de entrega é obrigatório") AddressRequestDTO address,
 
-        @NotEmpty(message = "É necessário informar pelo menos um produto")
-        Set<OrderProductResponseDTO> products
-) {
+    @NotEmpty(message = "É necessário informar pelo menos um produto") Set<OrderProductResponseDTO> products) {
 }
-
