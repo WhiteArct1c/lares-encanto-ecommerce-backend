@@ -15,6 +15,7 @@ public record ProductUpdateDTO(
         Integer categoryId,
         Integer pricingGroupId,
         Integer stockQuantity,
-        String type
+        String type,
+        Double weightKg
 ) {
 }

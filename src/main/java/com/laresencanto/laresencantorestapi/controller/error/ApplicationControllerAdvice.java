@@ -1,6 +1,7 @@
 package com.laresencanto.laresencantorestapi.controller.error;
 
 import com.laresencanto.laresencantorestapi.dto.response.error.ResponseErrorDTO;
+import com.laresencanto.laresencantorestapi.exception.BusinessException;
 import com.laresencanto.laresencantorestapi.exception.CustomerNotFoundException;
 import com.laresencanto.laresencantorestapi.exception.EntityNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -17,61 +18,64 @@ public class ApplicationControllerAdvice {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseErrorDTO handleInvalidRequestArgument(MethodArgumentNotValidException ex){
+    public ResponseErrorDTO handleInvalidRequestArgument(MethodArgumentNotValidException ex) {
         return new ResponseErrorDTO(
-            ex.getStatusCode().toString(),
-            "Erro interno, por favor, tento novamente mais tarde",
-            null
-        );
+                ex.getStatusCode().toString(),
+                "Erro interno, por favor, tento novamente mais tarde",
+                null);
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    public ResponseErrorDTO handleBadCredentialsException(){
+    public ResponseErrorDTO handleBadCredentialsException() {
         return new ResponseErrorDTO(
-            HttpStatus.FORBIDDEN.toString(),
+                HttpStatus.FORBIDDEN.toString(),
                 "Usuário inexistente ou senha inválida",
-                null
-        );
+                null);
     }
 
     @ExceptionHandler(InternalAuthenticationServiceException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    public ResponseErrorDTO handleNonExistentEmail(){
+    public ResponseErrorDTO handleNonExistentEmail() {
         return new ResponseErrorDTO(
                 HttpStatus.FORBIDDEN.toString(),
                 "Usuário inexistente ou senha inválida",
-                null
-        );
+                null);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseErrorDTO handleMissingRequiredFields(){
+    public ResponseErrorDTO handleMissingRequiredFields() {
         return new ResponseErrorDTO(
                 HttpStatus.BAD_REQUEST.toString(),
                 "Existe algum campo obrigatório que não foi informado.",
-                null
-        );
+                null);
     }
 
     @ExceptionHandler(CustomerNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ResponseErrorDTO handleCustomerNotFoundException(CustomerNotFoundException ex){
+    public ResponseErrorDTO handleCustomerNotFoundException(CustomerNotFoundException ex) {
         return new ResponseErrorDTO(
                 HttpStatus.NOT_FOUND.toString(),
                 ex.getMessage(),
-                null
-        );
+                null);
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ResponseErrorDTO handleEntityNotFoundException(EntityNotFoundException ex){
+    public ResponseErrorDTO handleEntityNotFoundException(EntityNotFoundException ex) {
         return new ResponseErrorDTO(
                 HttpStatus.NOT_FOUND.toString(),
                 ex.getMessage(),
-                null
-        );
+                null);
+    }
+
+    @ExceptionHandler(BusinessException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseErrorDTO handleBusinessException(BusinessException ex) {
+        return new ResponseErrorDTO(
+                HttpStatus.BAD_REQUEST.toString(),
+                ex.getMessage(),
+                null);
     }
 }

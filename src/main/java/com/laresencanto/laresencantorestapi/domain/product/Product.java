@@ -44,6 +44,9 @@ public class Product {
     @Column(columnDefinition = "bytea")
     private byte[] image;
 
+    @Column(name = "weight_kg")
+    private Double weightKg;
+
     @Column(nullable = false)
     private Boolean isActive;
 

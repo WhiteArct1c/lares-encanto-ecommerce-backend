@@ -1,6 +1,7 @@
 package com.laresencanto.laresencantorestapi.controller;
 
 import com.laresencanto.laresencantorestapi.dto.request.order.OrderCreateRequestDTO;
+import com.laresencanto.laresencantorestapi.dto.request.order.OrderStatusUpdateDTO;
 import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.order.OrderResponseDTO;
 import com.laresencanto.laresencantorestapi.service.OrderService;
@@ -35,5 +36,10 @@ public class OrderController {
     @PostMapping
     public ResponseDTO<OrderResponseDTO> createOrder(@RequestBody @Valid OrderCreateRequestDTO orderRequest) {
         return orderService.createOrder(orderRequest);
+    }
+
+    @PutMapping("/status")
+    public ResponseDTO<OrderResponseDTO> updateOrderStatus(@RequestBody @Valid OrderStatusUpdateDTO statusUpdateDTO) {
+        return orderService.updateOrderStatus(statusUpdateDTO);
     }
 }

@@ -53,7 +53,8 @@ public class ProductController {
             @RequestParam("pricingGroupId") Long pricingGroupId,
             @RequestParam("type") String type,
             @RequestParam("initialStockQuantity") int initialStockQuantity,
-            @RequestParam(value = "image") MultipartFile image // O arquivo é opcional
+            @RequestParam(value = "image", required = false) MultipartFile image, // O arquivo é opcional
+            @RequestParam(value = "weightKg", required = false) Double weightKg // Peso opcional
     ) {
         ProductCreateDTO dto = new ProductCreateDTO(
                 name,
@@ -64,7 +65,8 @@ public class ProductController {
                 Math.toIntExact(categoryId),
                 Math.toIntExact(pricingGroupId),
                 type,
-                initialStockQuantity
+                initialStockQuantity,
+                weightKg
         );
         return productService.createProduct(dto);
     }

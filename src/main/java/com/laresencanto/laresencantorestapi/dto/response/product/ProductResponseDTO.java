@@ -1,10 +1,12 @@
 package com.laresencanto.laresencantorestapi.dto.response.product;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.laresencanto.laresencantorestapi.dto.response.pricingGroup.PricingGroupResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.productCategory.ProductCategoryResponseDTO;
 
 import java.math.BigDecimal;
 
+@JsonInclude(JsonInclude.Include.ALWAYS)
 public record ProductResponseDTO(
         Integer id,
         String name,
@@ -17,6 +19,7 @@ public record ProductResponseDTO(
         ProductCategoryResponseDTO category,
         PricingGroupResponseDTO pricingGroup,
         String type,
-        Integer stockQuantity
+        Integer stockQuantity,
+        Double weightKg
 ) {
 }

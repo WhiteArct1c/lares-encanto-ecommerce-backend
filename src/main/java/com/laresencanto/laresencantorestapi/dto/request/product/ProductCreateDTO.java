@@ -13,5 +13,6 @@ public record ProductCreateDTO(
         Integer categoryId,
         Integer pricingGroupId,
         String type,
-        Integer initialStockQuantity
+        Integer initialStockQuantity,
+        Double weightKg
 ){}
