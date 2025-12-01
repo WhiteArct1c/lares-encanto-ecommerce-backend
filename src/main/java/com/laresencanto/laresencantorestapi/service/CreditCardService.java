@@ -107,6 +107,9 @@ public class CreditCardService {
 
         try{
             creditCardRepository.save(card);
+
+            // Garante que o cliente tenha sempre pelo menos um cartão principal
+            ensureAtLeastOneMainCard(customer);
         }catch(Exception e){
             return new ResponseDTO<>(
                     HttpStatus.BAD_REQUEST.toString(),
@@ -172,6 +175,9 @@ public class CreditCardService {
 
             try{
                 creditCardRepository.save(card);
+
+                // Garante que o cliente tenha sempre pelo menos um cartão principal
+                ensureAtLeastOneMainCard(customer);
             }catch(Exception e){
                 return new ResponseDTO<>(
                         HttpStatus.BAD_REQUEST.toString(),
@@ -192,7 +198,6 @@ public class CreditCardService {
         CustomerAuthDTO customerAuth = (CustomerAuthDTO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Customer customer = customerRepository.findById(customerAuth.id()).orElseThrow();
         Optional<CreditCard> creditCard = creditCardRepository.findByIdAndCustomerId(id, customer.getId());
-        List<CreditCard> customerCreditCards = creditCardRepository.findAllByCustomerId(customer.getId());
 
         if(creditCard.isEmpty()){
             return new ResponseDTO<>(
@@ -201,26 +206,13 @@ public class CreditCardService {
                     null
             );
         }else{
-            if(creditCard.get().isMainCard() && customerCreditCards.size() > 1){
-                CreditCard newMainCard = customerCreditCards.stream()
-                        .filter(card -> !card.isMainCard())
-                        .findFirst()
-                        .orElse(null);
-                if(newMainCard != null){
-                    newMainCard.setMainCard(true);
-                    try{
-                        creditCardRepository.save(newMainCard);
-                    }catch(Exception e){
-                        return new ResponseDTO<>(
-                                HttpStatus.BAD_REQUEST.toString(),
-                                "Erro ao atualizar dados do cartão, tente novamente mais tarde",
-                                null
-                        );
-                    }
-                }
-            }
             try{
                 creditCardRepository.deleteById(creditCard.get().getId());
+
+                // Após excluir, garante que, se ainda houver cartões,
+                // pelo menos um continue marcado como principal
+                ensureAtLeastOneMainCard(customer);
+
                 return new ResponseDTO<>(
                         HttpStatus.OK.toString(),
                         "Cartão de crédito excluído com sucesso!",
@@ -233,6 +225,40 @@ public class CreditCardService {
                         null
                 );
             }
+        }
+    }
+
+    /**
+     * Garante que o cliente tenha sempre pelo menos um cartão principal
+     * (quando há pelo menos um cartão cadastrado).
+     * Se nenhum cartão estiver marcado como principal, o primeiro da lista é promovido.
+     * Também normaliza para haver no máximo um principal.
+     */
+    private void ensureAtLeastOneMainCard(Customer customer) {
+        List<CreditCard> cards = creditCardRepository.findAllByCustomerId(customer.getId());
+
+        if (cards == null || cards.isEmpty()) {
+            return; // sem cartões, nada a fazer
+        }
+
+        CreditCard firstMain = null;
+        for (CreditCard card : cards) {
+            if (card.isMainCard()) {
+                if (firstMain == null) {
+                    firstMain = card;
+                } else {
+                    // Se por algum motivo houver mais de um principal, normaliza
+                    card.setMainCard(false);
+                    creditCardRepository.save(card);
+                }
+            }
+        }
+
+        // Se nenhum cartão principal foi encontrado, promove o primeiro da lista
+        if (firstMain == null) {
+            CreditCard toPromote = cards.get(0);
+            toPromote.setMainCard(true);
+            creditCardRepository.save(toPromote);
         }
     }
 
