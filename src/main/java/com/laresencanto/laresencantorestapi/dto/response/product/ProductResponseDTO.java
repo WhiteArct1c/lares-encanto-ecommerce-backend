@@ -6,6 +6,8 @@ import com.laresencanto.laresencantorestapi.dto.response.productCategory.Product
 
 import java.math.BigDecimal;
 
+import java.util.List;
+
 @JsonInclude(JsonInclude.Include.ALWAYS)
 public record ProductResponseDTO(
         Integer id,
@@ -13,13 +15,15 @@ public record ProductResponseDTO(
         String description,
         BigDecimal price,
         BigDecimal salePrice,
-        String color,
+        String color, // Mantido para compatibilidade
         String image,
         Boolean isActive,
         ProductCategoryResponseDTO category,
         PricingGroupResponseDTO pricingGroup,
         String type,
         Integer stockQuantity,
-        Double weightKg
+        Double weightKg,
+        List<ColorResponseDTO> colors, // Lista de cores
+        List<TagResponseDTO> tags // Lista de tags
 ) {
 }
