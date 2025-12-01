@@ -4,6 +4,9 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 .env
+google-credentials.json
+**/google-credentials.json
+**/*-credentials.json
 
 ### STS ###
 .apt_generated
