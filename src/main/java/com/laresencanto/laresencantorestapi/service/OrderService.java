@@ -367,43 +367,62 @@ public class OrderService {
                 // Salva novamente para persistir os relacionamentos
                 Order finalOrder = orderRepository.save(savedOrder);
 
-                // Processa cupons utilizados (após salvar o pedido)
+                // Registra cupons utilizados (sem debitar ainda).
+                // O débito real será feito apenas quando o pedido for APROVADO.
                 if (requestDTO.coupons() != null && !requestDTO.coupons().isEmpty()) {
-                        processCoupons(finalOrder, requestDTO.coupons(), customer.getId());
+                        registerOrderCoupons(finalOrder, requestDTO.coupons(), customer.getId());
                 }
 
                 return finalOrder;
         }
 
         private Address buildAddress(Customer customer, Order order, AddressRequestDTO addressDTO) {
-                if (addressDTO.id() == null || addressDTO.id().isEmpty()) {
-                        Address newAddress = new Address();
+                // Define se o endereço deve ser salvo no cadastro do cliente
+                boolean saveToAddressBook = addressDTO.saveToAddressBook() == null
+                                ? true // comportamento padrão: salvar, compatível com versão anterior
+                                : Boolean.TRUE.equals(addressDTO.saveToAddressBook());
 
-                        newAddress.setTitle(addressDTO.title());
-                        newAddress.setCep(addressDTO.cep());
-                        newAddress.setResidenceType(addressDTO.residenceType());
-                        newAddress.setAddressType(addressDTO.addressType());
-                        newAddress.setCategories(mapAddressCategories(addressDTO.addressCategories()));
-                        newAddress.setStreetName(addressDTO.streetName());
-                        newAddress.setAddressNumber(addressDTO.addressNumber());
-                        newAddress.setNeighborhoods(addressDTO.neighborhoods());
-                        newAddress.setCity(addressDTO.city());
-                        newAddress.setState(addressDTO.state());
-                        newAddress.setCountry(addressDTO.country());
-                        newAddress.setObservations(addressDTO.observations());
+                // Se o frontend não enviar categorias, assumimos DELIVERY como padrão para endereços de pedido
+                List<String> rawCategories = addressDTO.addressCategories();
+                List<String> effectiveCategories = (rawCategories == null || rawCategories.isEmpty())
+                                ? List.of(AddressCategory.DELIVERY.getCategory())
+                                : rawCategories;
+
+                // Sempre criamos um "snapshot" de endereço para o pedido.
+                // O flag saveToAddressBook controla apenas se esse snapshot também entra no cadastro do cliente.
+                Address newAddress = new Address();
+
+                newAddress.setTitle(addressDTO.title());
+                newAddress.setCep(addressDTO.cep());
+                newAddress.setResidenceType(addressDTO.residenceType());
+                newAddress.setAddressType(addressDTO.addressType());
+                newAddress.setCategories(mapAddressCategories(effectiveCategories));
+                newAddress.setStreetName(addressDTO.streetName());
+                newAddress.setAddressNumber(addressDTO.addressNumber());
+                newAddress.setNeighborhoods(addressDTO.neighborhoods());
+                newAddress.setCity(addressDTO.city());
+                newAddress.setState(addressDTO.state());
+                newAddress.setCountry(addressDTO.country());
+                newAddress.setObservations(addressDTO.observations());
+
+                if (saveToAddressBook) {
                         newAddress.setCustomer(customer);
-
-                        Address savedAddress = addressRepository.save(newAddress);
-                        order.setAddress(savedAddress);
-
-                        return savedAddress;
-                } else {
-                        Address address = addressRepository.findById(Long.valueOf(addressDTO.id()))
-                                        .orElseThrow(() -> new EntityNotFoundException("Endereço não encontrado"));
-                        order.setAddress(address);
-
-                        return address;
                 }
+
+                Address savedAddress = addressRepository.save(newAddress);
+                order.setAddress(savedAddress);
+
+                if (saveToAddressBook) {
+                        Set<Address> customerAddresses = customer.getAddress();
+                        if (customerAddresses == null) {
+                                customerAddresses = new HashSet<>();
+                        }
+                        customerAddresses.add(savedAddress);
+                        customer.setAddress(customerAddresses);
+                        customerRepository.save(customer);
+                }
+
+                return savedAddress;
         }
 
         private Set<AddressCategory> mapAddressCategories(List<String> categories) {
@@ -765,16 +784,13 @@ public class OrderService {
         }
 
         /**
-         * Processa e registra o uso dos cupons no pedido
+         * Registra os cupons vinculados ao pedido, sem debitar imediatamente.
+         * O débito efetivo é feito apenas quando o pedido é APROVADO.
          */
-        private void processCoupons(Order order, List<CouponUsageDTO> coupons, Long customerId) {
+        private void registerOrderCoupons(Order order, List<CouponUsageDTO> coupons, Long customerId) {
                 for (CouponUsageDTO couponUsage : coupons) {
                         Coupon coupon = couponService.validateCoupon(couponUsage.couponCode(), customerId);
 
-                        // Usa o cupom (atualiza usedValue e desativa se necessário)
-                        couponService.useCoupon(coupon, couponUsage.amountToUse());
-
-                        // Registra o uso do cupom no pedido
                         OrderCoupon orderCoupon = new OrderCoupon();
                         orderCoupon.setOrder(order);
                         orderCoupon.setCoupon(coupon);
@@ -1076,7 +1092,8 @@ public class OrderService {
                                 order.getAddress().getCity(),
                                 order.getAddress().getState(),
                                 order.getAddress().getCountry(),
-                                order.getAddress().getObservations());
+                                order.getAddress().getObservations(),
+                                true);
 
                 OrderStatusResponseDTO statusDTO = new OrderStatusResponseDTO(
                                 order.getStatus().getId(),
@@ -1268,6 +1285,14 @@ public class OrderService {
                 // Se mudou para APROVADO, faz a baixa efetiva do estoque
                 if ("APROVADO".equals(newStatus) && !"APROVADO".equals(oldStatus)) {
                         performStockDeduction(order);
+
+                        // Debita cupons somente quando o pedido é aprovado
+                        if (order.getOrderCoupons() != null && !order.getOrderCoupons().isEmpty()) {
+                                for (OrderCoupon orderCoupon : order.getOrderCoupons()) {
+                                        Coupon coupon = orderCoupon.getCoupon();
+                                        couponService.useCoupon(coupon, orderCoupon.getAmountUsed());
+                                }
+                        }
                 }
 
                 // Se mudou para REPROVADO ou CANCELADO, desbloqueia o estoque

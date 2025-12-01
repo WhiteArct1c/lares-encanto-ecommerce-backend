@@ -1,6 +1,5 @@
 package com.laresencanto.laresencantorestapi.dto.request.address;
 
-import com.laresencanto.laresencantorestapi.utils.enums.AddressCategory;
 import jakarta.validation.constraints.NotEmpty;
 
 import java.util.List;
@@ -42,6 +41,10 @@ public record AddressRequestDTO(
         String country,
 
         @NotEmpty(message = "As observações são obrigatórias")
-        String observations
+        String observations,
+
+        // Indica se o endereço deve ser salvo no cadastro do cliente.
+        // Se null, o backend assume true (mantém comportamento atual).
+        Boolean saveToAddressBook
 ) {
 }

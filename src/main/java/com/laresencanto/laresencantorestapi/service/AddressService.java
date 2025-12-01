@@ -110,7 +110,10 @@ public class AddressService {
         Optional<Address> address = addressRepository.findById(Long.parseLong(id));
 
         if(address.isPresent()){
-            if(address.get().getCategories().contains(AddressCategory.BILLING) && customerAddresses.size() > 1){
+            // Soft delete: marca como inativo em vez de remover fisicamente
+            Address addr = address.get();
+
+            if(addr.getCategories().contains(AddressCategory.BILLING) && customerAddresses.size() > 1){
                 customerAddresses.stream()
                         .filter(a -> !a.getCategories().contains(AddressCategory.BILLING))
                         .findFirst()
@@ -120,7 +123,8 @@ public class AddressService {
                         });
             }
 
-            addressRepository.delete(address.get());
+            addr.setIsActive(false);
+            addressRepository.save(addr);
             return new ResponseDTO<>(HttpStatus.OK.toString(), "Endereço excluído com sucesso!", null);
         }else{
             return  new ResponseDTO<ResponseErrorDTO>(HttpStatus.BAD_REQUEST.toString(), "Endereço informado não encontrado!", null);

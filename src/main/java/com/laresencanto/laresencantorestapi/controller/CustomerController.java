@@ -10,6 +10,11 @@ import com.laresencanto.laresencantorestapi.repository.CustomerRepository;
 import com.laresencanto.laresencantorestapi.repository.UserRepository;
 import com.laresencanto.laresencantorestapi.security.TokenService;
 import com.laresencanto.laresencantorestapi.service.CustomerService;
+import com.laresencanto.laresencantorestapi.domain.customer.Customer;
+import com.laresencanto.laresencantorestapi.domain.address.Address;
+import com.laresencanto.laresencantorestapi.dto.request.address.AddressRequestDTO;
+import com.laresencanto.laresencantorestapi.dto.response.customer.CreditCardResponseDTO;
+import com.laresencanto.laresencantorestapi.utils.enums.AddressCategory;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,14 +48,65 @@ public class CustomerController {
     }
 
     @GetMapping("/self")
-    public ResponseEntity<ResponseDTO<CustomerAuthDTO>> getCustomerById(){
-        CustomerAuthDTO customer = (CustomerAuthDTO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    public ResponseEntity<ResponseDTO<CustomerAuthDTO>> getCustomerById() throws CustomerNotFoundException {
+        CustomerAuthDTO auth = (CustomerAuthDTO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        // Recarrega o cliente do banco para garantir que endereços/cartões estejam atualizados
+        Customer customer = customerRepository.findById(auth.id())
+                .orElseThrow(() -> new CustomerNotFoundException("Cliente não encontrado"));
+
+        List<AddressRequestDTO> addresses = customer.getAddress()
+                .stream()
+                .filter(Address::getIsActive)
+                .map(address -> new AddressRequestDTO(
+                        address.getId() != null ? address.getId().toString() : null,
+                        address.getTitle(),
+                        address.getCep(),
+                        address.getResidenceType(),
+                        address.getAddressType(),
+                        address.getCategories() != null
+                                ? address.getCategories().stream().map(AddressCategory::getCategory).toList()
+                                : List.of(),
+                        address.getStreetName(),
+                        address.getAddressNumber(),
+                        address.getNeighborhoods(),
+                        address.getCity(),
+                        address.getState(),
+                        address.getCountry(),
+                        address.getObservations(),
+                        true // endereços retornados aqui são sempre do cadastro do cliente
+                ))
+                .toList();
+
+        List<CreditCardResponseDTO> creditCards = customer.getCreditCardList()
+                .stream()
+                .map(creditCard -> new CreditCardResponseDTO(
+                        creditCard.getId(),
+                        creditCard.getCardNumber(),
+                        creditCard.getCardName(),
+                        creditCard.getCardCode(),
+                        creditCard.getCardFlag(),
+                        creditCard.isMainCard()
+                ))
+                .toList();
+
+        CustomerAuthDTO upToDate = new CustomerAuthDTO(
+                customer.getId(),
+                customer.getFullName(),
+                customer.getCpf(),
+                customer.getBirthDate(),
+                customer.getPhone(),
+                customer.getGender(),
+                customer.getRanking(),
+                addresses,
+                creditCards
+        );
 
         return ResponseEntity.ok(
                 new ResponseDTO<>(
                         HttpStatus.OK.toString(),
                         "Cliente encontrado com sucesso",
-                        List.of(customer)
+                        List.of(upToDate)
                 )
         );
     }

@@ -1,6 +1,7 @@
 package com.laresencanto.laresencantorestapi.security;
 
 import com.laresencanto.laresencantorestapi.domain.customer.Customer;
+import com.laresencanto.laresencantorestapi.domain.address.Address;
 import com.laresencanto.laresencantorestapi.domain.user.User;
 import com.laresencanto.laresencantorestapi.dto.CustomerAuthDTO;
 import com.laresencanto.laresencantorestapi.dto.request.address.AddressRequestDTO;
@@ -60,6 +61,7 @@ public class SecurityFilter extends OncePerRequestFilter {
     protected UsernamePasswordAuthenticationToken getUsernamePasswordAuthenticationToken(Customer customer, User user) {
         List<AddressRequestDTO> addresses = customer.getAddress()
                 .stream()
+                .filter(Address::getIsActive)
                 .map(address -> new AddressRequestDTO(
                         address.getId().toString(),
                         address.getTitle(),
@@ -73,7 +75,8 @@ public class SecurityFilter extends OncePerRequestFilter {
                         address.getCity(),
                         address.getState(),
                         address.getCountry(),
-                        address.getObservations()
+                        address.getObservations(),
+                        true // endereços retornados do cadastro sempre pertencem ao address book
                 )).toList();
 
         List<CreditCardResponseDTO> creditCards = customer.getCreditCardList()
