@@ -1119,7 +1119,19 @@ public class OrderService {
                                                                                                         .getProfitMargin()),
                                                                         orderProduct.getProduct().getType(),
                                                                         stock.getQuantity(),
-                                                                        orderProduct.getProduct().getWeightKg())))
+                                                                        orderProduct.getProduct().getWeightKg(),
+                                                                        orderProduct.getProduct().getColors() != null
+                                                                                        ? orderProduct.getProduct().getColors().stream()
+                                                                                                        .map(c -> new com.laresencanto.laresencantorestapi.dto.response.product.ColorResponseDTO(
+                                                                                                                        c.getId(), c.getHexCode(), c.getName()))
+                                                                                                        .toList()
+                                                                                        : List.of(),
+                                                                        orderProduct.getProduct().getTags() != null
+                                                                                        ? orderProduct.getProduct().getTags().stream()
+                                                                                                        .map(t -> new com.laresencanto.laresencantorestapi.dto.response.product.TagResponseDTO(
+                                                                                                                        t.getId(), t.getName()))
+                                                                                                        .toList()
+                                                                                        : List.of())))
                                                         .orElse(null);
 
                                 })

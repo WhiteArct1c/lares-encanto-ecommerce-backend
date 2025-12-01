@@ -570,6 +570,22 @@ public class ExchangeService {
         product.getCategory().getId(),
         product.getCategory().getName());
 
+    List<com.laresencanto.laresencantorestapi.dto.response.product.ColorResponseDTO> colors = 
+        product.getColors() != null
+            ? product.getColors().stream()
+                .map(c -> new com.laresencanto.laresencantorestapi.dto.response.product.ColorResponseDTO(
+                    c.getId(), c.getHexCode(), c.getName()))
+                .toList()
+            : List.of();
+
+    List<com.laresencanto.laresencantorestapi.dto.response.product.TagResponseDTO> tags = 
+        product.getTags() != null
+            ? product.getTags().stream()
+                .map(t -> new com.laresencanto.laresencantorestapi.dto.response.product.TagResponseDTO(
+                    t.getId(), t.getName()))
+                .toList()
+            : List.of();
+
     return new ProductResponseDTO(
         product.getId(),
         product.getName(),
@@ -583,7 +599,9 @@ public class ExchangeService {
         pricingGroup,
         product.getType(),
         stockQuantity,
-        product.getWeightKg());
+        product.getWeightKg(),
+        colors,
+        tags);
   }
 
   /**
