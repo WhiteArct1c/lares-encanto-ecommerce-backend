@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
@@ -25,4 +26,6 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     Page<Customer> findAll(Pageable pageable);
 
     boolean existsByCpf(@CPF(message = "CPF deve ser válido") String cpf);
+
+    long countByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
 }

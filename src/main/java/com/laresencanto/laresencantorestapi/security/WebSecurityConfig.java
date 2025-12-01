@@ -48,6 +48,7 @@ public class WebSecurityConfig {
                     configureCreditCardEndpoints(authorize);
                     configureProductEndpoints(authorize);
                     configurePricingGroupEndpoints(authorize);
+                    configureAdminDashboardEndpoints(authorize);
                     authorize.anyRequest().permitAll(); // Libera qualquer outra requisição
                 })
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
@@ -89,5 +90,10 @@ public class WebSecurityConfig {
     private void configurePricingGroupEndpoints(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry authorize) {
         authorize
                 .requestMatchers(HttpMethod.GET, "/pricing-groups").hasRole("ADMIN");
+    }
+
+    private void configureAdminDashboardEndpoints(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry authorize) {
+        authorize
+                .requestMatchers(HttpMethod.GET, "/admin/dashboard/**").hasRole("ADMIN");
     }
 }
