@@ -11,6 +11,10 @@ import com.laresencanto.laresencantorestapi.domain.product.Product;
 import com.laresencanto.laresencantorestapi.domain.product.Stock;
 import com.laresencanto.laresencantorestapi.dto.CustomerAuthDTO;
 import com.laresencanto.laresencantorestapi.dto.response.pricingGroup.PricingGroupResponseDTO;
+import com.laresencanto.laresencantorestapi.dto.request.exchange.ExchangeItemDTO;
+import com.laresencanto.laresencantorestapi.dto.request.exchange.ExchangeStatusUpdateDTO;
+import com.laresencanto.laresencantorestapi.dto.response.product.ColorResponseDTO;
+import com.laresencanto.laresencantorestapi.dto.response.product.TagResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.productCategory.ProductCategoryResponseDTO;
 import org.apache.tika.Tika;
 
@@ -20,7 +24,6 @@ import com.laresencanto.laresencantorestapi.dto.request.exchange.ExchangeConfirm
 import com.laresencanto.laresencantorestapi.dto.request.exchange.ExchangeRequestDTO;
 import com.laresencanto.laresencantorestapi.dto.request.exchange.ExchangeStatusUpdateDTO;
 import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
-import com.laresencanto.laresencantorestapi.dto.response.coupon.CouponResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.exchange.ExchangeItemResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.exchange.ExchangeResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.order.OrderProductResponseDTO;
@@ -110,7 +113,7 @@ public class ExchangeService {
 
     // Valida que não há orderProductId duplicados
     long distinctOrderProductIds = requestDTO.items().stream()
-        .map(com.laresencanto.laresencantorestapi.dto.request.exchange.ExchangeItemDTO::orderProductId)
+        .map(ExchangeItemDTO::orderProductId)
         .distinct()
         .count();
 
@@ -136,7 +139,7 @@ public class ExchangeService {
     Exchange savedExchange = exchangeRepository.save(exchange);
 
     // Processa cada item da requisição e cria ExchangeItems
-    for (com.laresencanto.laresencantorestapi.dto.request.exchange.ExchangeItemDTO item : requestDTO.items()) {
+    for (ExchangeItemDTO item : requestDTO.items()) {
       // Busca o produto do pedido
       OrderProduct orderProduct = orderProductRepository.findById(item.orderProductId())
           .orElseThrow(() -> new EntityNotFoundException(
@@ -163,11 +166,10 @@ public class ExchangeService {
           .mapToInt(ExchangeItem::getQuantity)
           .sum();
 
-      // Soma também as quantidades que estão sendo solicitadas agora (para o mesmo
-      // produto)
+      // Soma também as quantidades que estão sendo solicitadas agora (para o mesmo produto)
       int currentRequestQuantity = requestDTO.items().stream()
           .filter(i -> i.orderProductId().equals(item.orderProductId()))
-          .mapToInt(com.laresencanto.laresencantorestapi.dto.request.exchange.ExchangeItemDTO::quantity)
+          .mapToInt(ExchangeItemDTO::quantity)
           .sum();
 
       if (totalExchangedQuantity + currentRequestQuantity > orderProduct.getQuantity()) {
@@ -390,7 +392,7 @@ public class ExchangeService {
    */
   @Transactional
   public ResponseDTO<ExchangeResponseDTO> updateExchangeStatus(
-      com.laresencanto.laresencantorestapi.dto.request.exchange.ExchangeStatusUpdateDTO requestDTO) {
+      ExchangeStatusUpdateDTO requestDTO) {
     Exchange exchange = exchangeRepository.findById(requestDTO.exchangeId())
         .orElseThrow(() -> new EntityNotFoundException("Troca não encontrada"));
 
@@ -573,18 +575,18 @@ public class ExchangeService {
         product.getCategory().getId(),
         product.getCategory().getName());
 
-    List<com.laresencanto.laresencantorestapi.dto.response.product.ColorResponseDTO> colors = 
+    List<ColorResponseDTO> colors = 
         product.getColors() != null
             ? product.getColors().stream()
-                .map(c -> new com.laresencanto.laresencantorestapi.dto.response.product.ColorResponseDTO(
+                .map(c -> new ColorResponseDTO(
                     c.getId(), c.getHexCode(), c.getName()))
                 .toList()
             : List.of();
 
-    List<com.laresencanto.laresencantorestapi.dto.response.product.TagResponseDTO> tags = 
+    List<TagResponseDTO> tags = 
         product.getTags() != null
             ? product.getTags().stream()
-                .map(t -> new com.laresencanto.laresencantorestapi.dto.response.product.TagResponseDTO(
+                .map(t -> new TagResponseDTO(
                     t.getId(), t.getName()))
                 .toList()
             : List.of();

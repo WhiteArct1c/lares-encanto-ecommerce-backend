@@ -17,6 +17,8 @@ import com.laresencanto.laresencantorestapi.dto.response.address.AddressResponse
 import com.laresencanto.laresencantorestapi.dto.response.customer.CreditCardResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.customer.CustomerResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.order.*;
+import com.laresencanto.laresencantorestapi.dto.response.product.ColorResponseDTO;
+import com.laresencanto.laresencantorestapi.dto.response.product.TagResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.pricingGroup.PricingGroupResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.product.ProductResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.productCategory.ProductCategoryResponseDTO;
@@ -1137,15 +1139,15 @@ public class OrderService {
                                                                         orderProduct.getProduct().getType(),
                                                                         stock.getQuantity(),
                                                                         orderProduct.getProduct().getWeightKg(),
-                                                                        orderProduct.getProduct().getColors() != null
+                                                                                                orderProduct.getProduct().getColors() != null
                                                                                         ? orderProduct.getProduct().getColors().stream()
-                                                                                                        .map(c -> new com.laresencanto.laresencantorestapi.dto.response.product.ColorResponseDTO(
+                                                                                                        .map(c -> new ColorResponseDTO(
                                                                                                                         c.getId(), c.getHexCode(), c.getName()))
                                                                                                         .toList()
                                                                                         : List.of(),
                                                                         orderProduct.getProduct().getTags() != null
                                                                                         ? orderProduct.getProduct().getTags().stream()
-                                                                                                        .map(t -> new com.laresencanto.laresencantorestapi.dto.response.product.TagResponseDTO(
+                                                                                                        .map(t -> new TagResponseDTO(
                                                                                                                         t.getId(), t.getName()))
                                                                                                         .toList()
                                                                                         : List.of())))

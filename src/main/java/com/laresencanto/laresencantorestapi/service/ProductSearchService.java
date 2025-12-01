@@ -1,7 +1,12 @@
 package com.laresencanto.laresencantorestapi.service;
 
 import com.laresencanto.laresencantorestapi.domain.product.Product;
+import com.laresencanto.laresencantorestapi.domain.product.Color;
+import com.laresencanto.laresencantorestapi.domain.product.Tag;
+import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
+import com.laresencanto.laresencantorestapi.dto.response.product.ColorResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.product.ImageSearchResponseDTO;
+import com.laresencanto.laresencantorestapi.dto.response.product.TagResponseDTO;
 import com.laresencanto.laresencantorestapi.repository.ProductRepository;
 import org.apache.tika.Tika;
 import org.slf4j.Logger;
@@ -10,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.awt.Color;
 import java.util.*;
 import java.util.Base64;
 import java.util.stream.Collectors;
@@ -52,12 +56,12 @@ public class ProductSearchService {
         this.translationService = translationService;
     }
 
-    public com.laresencanto.laresencantorestapi.dto.response.ResponseDTO<ImageSearchResponseDTO> searchByImage(
+    public ResponseDTO<ImageSearchResponseDTO> searchByImage(
             MultipartFile imageFile) {
 
         try {
             if (imageFile == null || imageFile.isEmpty()) {
-                return new com.laresencanto.laresencantorestapi.dto.response.ResponseDTO<>(
+                return new ResponseDTO<>(
                         HttpStatus.BAD_REQUEST.toString(),
                         "Imagem não fornecida ou vazia.",
                         null);
@@ -72,7 +76,7 @@ public class ProductSearchService {
                 if (!isFurnitureImage(analysisResult)) {
                     logger.warn("Image rejected: does not contain furniture. Labels: {}, Objects: {}", 
                             analysisResult.getLabels(), analysisResult.getObjects());
-                    return new com.laresencanto.laresencantorestapi.dto.response.ResponseDTO<>(
+                    return new ResponseDTO<>(
                             HttpStatus.BAD_REQUEST.toString(),
                             "A imagem enviada não parece conter móveis. Por favor, envie uma imagem de móveis (cadeiras, sofás, mesas, camas, armários, etc.).",
                             null);
@@ -113,14 +117,14 @@ public class ProductSearchService {
                     matches,
                     searchMethod);
 
-            return new com.laresencanto.laresencantorestapi.dto.response.ResponseDTO<>(
+            return new ResponseDTO<>(
                     HttpStatus.OK.toString(),
                     "Busca realizada com sucesso.",
                     List.of(response));
 
         } catch (Exception e) {
             logger.error("Error searching products by image", e);
-            return new com.laresencanto.laresencantorestapi.dto.response.ResponseDTO<>(
+            return new ResponseDTO<>(
                     HttpStatus.INTERNAL_SERVER_ERROR.toString(),
                     "Erro ao processar busca por imagem: " + e.getMessage(),
                     null);
@@ -345,7 +349,7 @@ public class ProductSearchService {
 
                 // Match com cores múltiplas do produto (novo)
                 if (product.getColors() != null && !product.getColors().isEmpty()) {
-                    for (com.laresencanto.laresencantorestapi.domain.product.Color productColor : product.getColors()) {
+                    for (Color productColor : product.getColors()) {
                         for (String detectedColor : colors) {
                             if (isColorSimilar(productColor.getHexCode(), detectedColor)) {
                                 similarityScore += 0.15;
@@ -381,7 +385,7 @@ public class ProductSearchService {
                 int tagMatches = 0;
 
                 // Match de tags com labels detectados
-                for (com.laresencanto.laresencantorestapi.domain.product.Tag tag : product.getTags()) {
+                for (Tag tag : product.getTags()) {
                     String tagName = normalizeString(tag.getName());
                     Set<String> tagTranslations = getTranslations(tagName, product.getTags());
 
@@ -623,14 +627,14 @@ public class ProductSearchService {
      * Busca traduções do banco de dados (cache) e inclui a própria palavra
      */
     private Set<String> getTranslations(String word,
-            Set<com.laresencanto.laresencantorestapi.domain.product.Tag> productTags) {
+        Set<Tag> productTags) {
         Set<String> translations = new HashSet<>();
         String normalized = normalizeString(word);
         translations.add(normalized); // Sempre inclui a própria palavra
 
         // Busca traduções das tags do produto que correspondem à palavra
         if (productTags != null) {
-            for (com.laresencanto.laresencantorestapi.domain.product.Tag tag : productTags) {
+            for (Tag tag : productTags) {
                 String normalizedTag = normalizeString(tag.getName());
                 if (normalizedTag.equals(normalized)) {
                     // Se a tag corresponde à palavra, busca sua tradução do banco
@@ -647,7 +651,7 @@ public class ProductSearchService {
      * Verifica se há match contextual (ex: TV/television, rack/support)
      */
     private boolean hasContextualMatch(String productName, String label,
-            Set<com.laresencanto.laresencantorestapi.domain.product.Tag> productTags) {
+            Set<Tag> productTags) {
         String normalizedProduct = normalizeString(productName);
         String normalizedLabel = normalizeString(label);
 
