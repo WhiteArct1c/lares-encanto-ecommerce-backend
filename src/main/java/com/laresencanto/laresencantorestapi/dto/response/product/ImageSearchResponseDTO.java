@@ -13,7 +13,8 @@ public record ImageSearchResponseDTO(
             Integer productId,
             String productName,
             Double similarityScore,
-            List<String> matchReasons
+            List<String> matchReasons,
+            String productImage
     ) {}
 }
 

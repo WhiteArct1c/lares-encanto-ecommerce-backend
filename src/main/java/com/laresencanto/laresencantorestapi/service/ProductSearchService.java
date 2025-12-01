@@ -3,6 +3,7 @@ package com.laresencanto.laresencantorestapi.service;
 import com.laresencanto.laresencantorestapi.domain.product.Product;
 import com.laresencanto.laresencantorestapi.dto.response.product.ImageSearchResponseDTO;
 import com.laresencanto.laresencantorestapi.repository.ProductRepository;
+import org.apache.tika.Tika;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -11,12 +12,32 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.awt.Color;
 import java.util.*;
+import java.util.Base64;
 import java.util.stream.Collectors;
 
 @Service
 public class ProductSearchService {
 
     private static final Logger logger = LoggerFactory.getLogger(ProductSearchService.class);
+
+    // Lista de termos relacionados a móveis (em inglês, pois Google Vision retorna em inglês)
+    private static final Set<String> FURNITURE_KEYWORDS = Set.of(
+            "furniture", "chair", "sofa", "couch", "table", "desk", "bed", "wardrobe", 
+            "cabinet", "shelf", "shelving", "stool", "bench", "ottoman", "armchair", 
+            "recliner", "dresser", "nightstand", "night stand", "bookshelf", "bookcase",
+            "dining table", "coffee table", "side table", "end table", "console table",
+            "chest", "drawer", "closet", "armoire", "headboard", "footboard", "mattress", 
+            "bed frame", "bedframe", "bunk bed", "office chair", "desk chair", "bar stool", 
+            "counter stool", "dining chair", "dining set", "dining room", "living room", 
+            "bedroom", "office furniture", "outdoor furniture", "garden furniture", 
+            "patio furniture", "deck chair", "rocking chair", "swivel chair", "lounge chair", 
+            "chaise lounge", "futon", "daybed", "trundle bed", "platform bed", "storage bed",
+            "bureau", "chest of drawers", "vanity", "mirror", "dressing table", "sideboard", 
+            "buffet", "hutch", "china cabinet", "display cabinet", "tv stand", "tv cabinet", 
+            "entertainment center", "media console", "rack", "shelving unit", "display shelf", 
+            "floating shelf", "wall shelf", "corner shelf", "kitchen island", "kitchen cabinet", 
+            "pantry", "bar cart", "bar cabinet", "wine rack", "wine cabinet", "liquor cabinet"
+    );
 
     private final ImageAnalysisService imageAnalysisService;
     private final ProductRepository productRepository;
@@ -45,6 +66,22 @@ public class ProductSearchService {
             byte[] imageBytes = imageFile.getBytes();
 
             ImageAnalysisService.ImageAnalysisResult analysisResult = imageAnalysisService.analyzeImage(imageBytes);
+
+            // Valida se a imagem contém móveis
+            if (analysisResult != null) {
+                if (!isFurnitureImage(analysisResult)) {
+                    logger.warn("Image rejected: does not contain furniture. Labels: {}, Objects: {}", 
+                            analysisResult.getLabels(), analysisResult.getObjects());
+                    return new com.laresencanto.laresencantorestapi.dto.response.ResponseDTO<>(
+                            HttpStatus.BAD_REQUEST.toString(),
+                            "A imagem enviada não parece conter móveis. Por favor, envie uma imagem de móveis (cadeiras, sofás, mesas, camas, armários, etc.).",
+                            null);
+                }
+            } else {
+                // Se a API não estiver disponível, não podemos validar
+                logger.warn("Vision API not available, cannot validate if image contains furniture. Proceeding with basic analysis.");
+                // Podemos optar por rejeitar ou permitir. Vou permitir mas avisar no log
+            }
 
             // Busca produtos com cores e tags carregadas
             List<Product> allProducts = productRepository.findAllWithColorsAndTags();
@@ -104,6 +141,10 @@ public class ProductSearchService {
             List<String> colors = analysisResult.getColors();
             List<String> objects = analysisResult.getObjects();
 
+            // Flags para controlar matches de alto nível (tipo/objeto e tags)
+            boolean hasTypeOrObjectMatch = false;
+            boolean hasTagMatch = false;
+
             // 1. MATCH DE TIPO/OBJETO (Peso: 40% - mais importante)
             if (product.getType() != null) {
                 String productType = normalizeString(product.getType());
@@ -126,15 +167,18 @@ public class ProductSearchService {
 
                     if (matchScore >= 1.0 || translationMatch) {
                         similarityScore += 0.4;
+                        hasTypeOrObjectMatch = true;
                         String matchType = translationMatch ? "objeto traduzido" : "objeto exato";
                         matchReasons.add(matchType + ": " + object);
                         break;
                     } else if (matchScore >= 0.7) {
                         similarityScore += 0.35;
+                        hasTypeOrObjectMatch = true;
                         matchReasons.add("objeto similar: " + object);
                         break;
                     } else if (matchScore >= 0.5) {
                         similarityScore += 0.25;
+                        hasTypeOrObjectMatch = true;
                         matchReasons.add("objeto parcial: " + object);
                         break;
                     }
@@ -157,6 +201,7 @@ public class ProductSearchService {
 
                     if (matchScore >= 1.0 || translationMatch) {
                         similarityScore += 0.35;
+                        hasTypeOrObjectMatch = true;
                         String matchType = translationMatch ? "tipo traduzido" : "tipo exato";
                         if (!matchReasons.contains(matchType + ": " + label)) {
                             matchReasons.add(matchType + ": " + label);
@@ -164,12 +209,14 @@ public class ProductSearchService {
                         break;
                     } else if (matchScore >= 0.7) {
                         similarityScore += 0.3;
+                        hasTypeOrObjectMatch = true;
                         if (!matchReasons.contains("tipo similar: " + label)) {
                             matchReasons.add("tipo similar: " + label);
                         }
                         break;
                     } else if (matchScore >= 0.5) {
                         similarityScore += 0.2;
+                        hasTypeOrObjectMatch = true;
                         if (!matchReasons.contains("tipo parcial: " + label)) {
                             matchReasons.add("tipo parcial: " + label);
                         }
@@ -356,6 +403,7 @@ public class ProductSearchService {
 
                         if (tagScore >= 1.0 || translationMatch) {
                             similarityScore += 0.3;
+                            hasTagMatch = true;
                             tagMatches++;
                             String matchType = translationMatch ? "tag traduzida" : "tag exata";
                             if (!matchReasons.contains(matchType + ": " + tag.getName())) {
@@ -364,6 +412,7 @@ public class ProductSearchService {
                             break;
                         } else if (tagScore >= 0.7) {
                             similarityScore += 0.25;
+                            hasTagMatch = true;
                             tagMatches++;
                             if (!matchReasons.contains("tag similar: " + tag.getName())) {
                                 matchReasons.add("tag similar: " + tag.getName() + " ≈ " + label);
@@ -371,6 +420,7 @@ public class ProductSearchService {
                             break;
                         } else if (tagScore >= 0.5) {
                             similarityScore += 0.15;
+                            hasTagMatch = true;
                             tagMatches++;
                             if (!matchReasons.contains("tag parcial: " + tag.getName())) {
                                 matchReasons.add("tag parcial: " + tag.getName() + " ~ " + label);
@@ -397,6 +447,7 @@ public class ProductSearchService {
 
                         if (tagScore >= 1.0 || translationMatch) {
                             similarityScore += 0.3;
+                            hasTagMatch = true;
                             tagMatches++;
                             String matchType = translationMatch ? "tag-objeto traduzida" : "tag-objeto exata";
                             if (!matchReasons.contains(matchType + ": " + tag.getName())) {
@@ -405,6 +456,7 @@ public class ProductSearchService {
                             break;
                         } else if (tagScore >= 0.7) {
                             similarityScore += 0.25;
+                            hasTagMatch = true;
                             tagMatches++;
                             if (!matchReasons.contains("tag-objeto similar: " + tag.getName())) {
                                 matchReasons.add("tag-objeto similar: " + tag.getName() + " ≈ " + object);
@@ -467,6 +519,12 @@ public class ProductSearchService {
                 }
             }
 
+            // Se não houve nenhum match de tipo/objeto nem de tags,
+            // evitamos recomendar produtos apenas por cor/nome/descrição
+            if (!hasTypeOrObjectMatch && !hasTagMatch) {
+                similarityScore = 0.0;
+            }
+
             // Normalizar score (máximo 1.0)
             similarityScore = Math.min(1.0, similarityScore);
 
@@ -476,13 +534,14 @@ public class ProductSearchService {
                         product.getId(),
                         product.getName(),
                         similarityScore,
-                        matchReasons));
+                        matchReasons,
+                        convertByteToBase64String(product.getImage())));
             }
         }
 
         return matches.stream()
                 .sorted((a, b) -> Double.compare(b.similarityScore(), a.similarityScore()))
-                .limit(10)
+                .limit(3)
                 .collect(Collectors.toList());
     }
 
@@ -672,7 +731,8 @@ public class ProductSearchService {
                             product.getId(),
                             product.getName(),
                             similarityScore,
-                            matchReasons));
+                            matchReasons,
+                            convertByteToBase64String(product.getImage())));
                 }
             }
 
@@ -682,7 +742,7 @@ public class ProductSearchService {
 
         return matches.stream()
                 .sorted((a, b) -> Double.compare(b.similarityScore(), a.similarityScore()))
-                .limit(10)
+                .limit(3)
                 .collect(Collectors.toList());
     }
 
@@ -726,5 +786,73 @@ public class ProductSearchService {
         } catch (Exception e) {
             return color1.equalsIgnoreCase(color2);
         }
+    }
+
+    /**
+     * Valida se a imagem contém móveis baseado nos labels e objetos detectados
+     *
+     * @param analysisResult resultado da análise da imagem pelo Google Vision
+     * @return true se a imagem contém móveis, false caso contrário
+     */
+    private boolean isFurnitureImage(ImageAnalysisService.ImageAnalysisResult analysisResult) {
+        if (analysisResult == null) {
+            return false;
+        }
+
+        // Verifica labels
+        for (String label : analysisResult.getLabels()) {
+            String normalizedLabel = normalizeString(label);
+            if (FURNITURE_KEYWORDS.contains(normalizedLabel)) {
+                logger.debug("Furniture detected via label: {}", label);
+                return true;
+            }
+        }
+
+        // Verifica objetos detectados
+        for (String object : analysisResult.getObjects()) {
+            String normalizedObject = normalizeString(object);
+            if (FURNITURE_KEYWORDS.contains(normalizedObject)) {
+                logger.debug("Furniture detected via object: {}", object);
+                return true;
+            }
+        }
+
+        // Verifica também se algum label/objeto contém palavras-chave (para casos como "dining table", "office chair")
+        Set<String> allTerms = new HashSet<>();
+        allTerms.addAll(analysisResult.getLabels());
+        allTerms.addAll(analysisResult.getObjects());
+
+        for (String term : allTerms) {
+            String normalizedTerm = normalizeString(term);
+            // Verifica se o termo contém alguma palavra-chave de móveis
+            for (String keyword : FURNITURE_KEYWORDS) {
+                if (normalizedTerm.contains(keyword) || keyword.contains(normalizedTerm)) {
+                    logger.debug("Furniture detected via partial match: {} contains {}", term, keyword);
+                    return true;
+                }
+            }
+        }
+
+        logger.debug("No furniture detected. Labels: {}, Objects: {}", 
+                analysisResult.getLabels(), analysisResult.getObjects());
+        return false;
+    }
+
+    /**
+     * Converte um array de bytes de imagem para uma string Base64 com data URI
+     *
+     * @param image o array de bytes da imagem do produto
+     * @return uma string com a imagem em Base64 com o tipo de imagem, ou null se a imagem for null
+     */
+    private String convertByteToBase64String(byte[] image) {
+        if (image == null || image.length == 0) {
+            return null;
+        }
+
+        Tika tika = new Tika();
+        String base64Image = Base64.getEncoder().encodeToString(image);
+        String type = tika.detect(image);
+
+        return "data:" + type + ";base64," + base64Image;
     }
 }
