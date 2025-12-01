@@ -4,7 +4,9 @@ import com.laresencanto.laresencantorestapi.dto.request.product.ProductCreateDTO
 import com.laresencanto.laresencantorestapi.dto.request.product.ProductEnableDisableDTO;
 import com.laresencanto.laresencantorestapi.dto.request.product.ProductUpdateDTO;
 import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
+import com.laresencanto.laresencantorestapi.dto.response.product.ImageSearchResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.product.ProductResponseDTO;
+import com.laresencanto.laresencantorestapi.service.ProductSearchService;
 import com.laresencanto.laresencantorestapi.service.ProductService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
@@ -12,15 +14,18 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @RestController
 @RequestMapping("/products")
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductSearchService productSearchService;
 
-    public ProductController(ProductService productService) {
+    public ProductController(ProductService productService, ProductSearchService productSearchService) {
         this.productService = productService;
+        this.productSearchService = productSearchService;
     }
 
     @GetMapping
@@ -54,7 +59,9 @@ public class ProductController {
             @RequestParam("type") String type,
             @RequestParam("initialStockQuantity") int initialStockQuantity,
             @RequestParam(value = "image", required = false) MultipartFile image,
-            @RequestParam(value = "weightKg", required = false) Double weightKg
+            @RequestParam(value = "weightKg", required = false) Double weightKg,
+            @RequestParam(value = "colorHexCodes", required = false) List<String> colorHexCodes,
+            @RequestParam(value = "tagNames", required = false) List<String> tagNames
     ) {
         ProductCreateDTO dto = new ProductCreateDTO(
                 name,
@@ -66,7 +73,9 @@ public class ProductController {
                 Math.toIntExact(pricingGroupId),
                 type,
                 initialStockQuantity,
-                weightKg
+                weightKg,
+                colorHexCodes,
+                tagNames
         );
         return productService.createProduct(dto);
     }
@@ -84,7 +93,9 @@ public class ProductController {
             @RequestParam(value = "pricingGroupId", required = false) Long pricingGroupId,
             @RequestParam(value = "stockQuantity", required = false) Integer stockQuantity,
             @RequestParam(value = "type", required = false) String type,
-            @RequestParam(value = "weightKg", required = false) Double weightKg
+            @RequestParam(value = "weightKg", required = false) Double weightKg,
+            @RequestParam(value = "colorHexCodes", required = false) List<String> colorHexCodes,
+            @RequestParam(value = "tagNames", required = false) List<String> tagNames
     ) {
         ProductUpdateDTO dto = new ProductUpdateDTO(
                 id,
@@ -98,7 +109,9 @@ public class ProductController {
                 pricingGroupId != null ? Math.toIntExact(pricingGroupId) : null,
                 stockQuantity,
                 type,
-                weightKg
+                weightKg,
+                colorHexCodes,
+                tagNames
         );
         return productService.updateProduct(id, dto);
     }
@@ -116,5 +129,12 @@ public class ProductController {
     @DeleteMapping("/{id}")
     public ResponseDTO<Void> deleteProduct(@PathVariable Integer id) {
         return productService.deleteProduct(id);
+    }
+
+    @PostMapping(value = "/search-by-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseDTO<ImageSearchResponseDTO> searchByImage(
+            @RequestParam("image") MultipartFile image
+    ) {
+        return productSearchService.searchByImage(image);
     }
 }

@@ -82,7 +82,8 @@ public class WebSecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/products/{id}").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/products/enable").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/products/disable").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/products/{id}").hasRole("ADMIN");
+                .requestMatchers(HttpMethod.DELETE, "/products/{id}").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/products/search-by-image").permitAll();
     }
 
     private void configurePricingGroupEndpoints(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry authorize) {
