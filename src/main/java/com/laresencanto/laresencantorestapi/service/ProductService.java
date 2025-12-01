@@ -197,9 +197,6 @@ public class ProductService {
          */
         public ResponseDTO<ProductResponseDTO> updateProduct(Integer id, ProductUpdateDTO dto) {
                 Optional<Product> productOpt = productRepository.findById(Long.valueOf(id));
-                Optional<ProductCategory> categoryOpt = productCategoryRepository.findById(dto.categoryId());
-                Optional<PricingGroup> pricingGroupOpt = pricingGroupRepository.findById(dto.pricingGroupId());
-                Optional<Stock> stockOpt = stockRepository.findByProductId(dto.id());
 
                 if (productOpt.isEmpty()) {
                         return new ResponseDTO<>(
@@ -208,44 +205,58 @@ public class ProductService {
                                         null);
                 }
 
-                if (categoryOpt.isEmpty()) {
-                        return new ResponseDTO<>(
-                                        HttpStatus.NOT_FOUND.toString(),
-                                        "Categoria não encontrada.",
-                                        null);
-                }
-
-                if (pricingGroupOpt.isEmpty()) {
-                        return new ResponseDTO<>(
-                                        HttpStatus.NOT_FOUND.toString(),
-                                        "Grupo de precificação não encontrado.",
-                                        null);
-                }
-
-                if (stockOpt.isEmpty()) {
-                        return new ResponseDTO<>(
-                                        HttpStatus.NOT_FOUND.toString(),
-                                        "Estoque do produto não encontrado.",
-                                        null);
-                }
-
                 Product product = productOpt.get();
-                product.setName(dto.name());
-                product.setDescription(dto.description());
-                product.setPrice(dto.price());
-                product.setColor(dto.color());
-                product.setIsActive(dto.isActive());
-                product.setCategory(categoryOpt.get());
-                product.setPricingGroup(pricingGroupOpt.get());
-                product.setType(dto.type());
+                
+                if (dto.name() != null) {
+                        product.setName(dto.name());
+                }
+                if (dto.description() != null) {
+                        product.setDescription(dto.description());
+                }
+                if (dto.price() != null) {
+                        product.setPrice(dto.price());
+                }
+                if (dto.color() != null) {
+                        product.setColor(dto.color());
+                }
+                if (dto.isActive() != null) {
+                        product.setIsActive(dto.isActive());
+                }
+                if (dto.type() != null) {
+                        product.setType(dto.type());
+                }
                 if (dto.weightKg() != null) {
                         product.setWeightKg(dto.weightKg());
                 }
-                // Calcula preço de venda com base no grupo de precificação
-                product.setSalePrice(
-                                calculateSalePrice(
-                                                product.getPrice(),
-                                                BigDecimal.valueOf(product.getPricingGroup().getProfitMargin())));
+                
+                if (dto.categoryId() != null) {
+                        Optional<ProductCategory> categoryOpt = productCategoryRepository.findById(dto.categoryId());
+                        if (categoryOpt.isEmpty()) {
+                                return new ResponseDTO<>(
+                                                HttpStatus.NOT_FOUND.toString(),
+                                                "Categoria não encontrada.",
+                                                null);
+                        }
+                        product.setCategory(categoryOpt.get());
+                }
+                
+                if (dto.pricingGroupId() != null) {
+                        Optional<PricingGroup> pricingGroupOpt = pricingGroupRepository.findById(dto.pricingGroupId());
+                        if (pricingGroupOpt.isEmpty()) {
+                                return new ResponseDTO<>(
+                                                HttpStatus.NOT_FOUND.toString(),
+                                                "Grupo de precificação não encontrado.",
+                                                null);
+                        }
+                        product.setPricingGroup(pricingGroupOpt.get());
+                }
+                
+                if (dto.price() != null || dto.pricingGroupId() != null) {
+                        product.setSalePrice(
+                                        calculateSalePrice(
+                                                        product.getPrice(),
+                                                        BigDecimal.valueOf(product.getPricingGroup().getProfitMargin())));
+                }
 
                 MultipartFile imageFile = dto.image();
                 if (imageFile != null && !imageFile.isEmpty()) {
@@ -259,16 +270,24 @@ public class ProductService {
                         }
                 }
 
-                // Update stock quantity
-                Stock stock = stockOpt.get();
-                if (dto.stockQuantity() < stock.getReservedQuantity()) {
-                        return new ResponseDTO<>(
-                                        HttpStatus.BAD_REQUEST.toString(),
-                                        "Quantidade em estoque não pode ser menor que a quantidade reservada.",
-                                        null);
+                if (dto.stockQuantity() != null) {
+                        Optional<Stock> stockOpt = stockRepository.findByProductId(id);
+                        if (stockOpt.isEmpty()) {
+                                return new ResponseDTO<>(
+                                                HttpStatus.NOT_FOUND.toString(),
+                                                "Estoque do produto não encontrado.",
+                                                null);
+                        }
+                        Stock stock = stockOpt.get();
+                        if (dto.stockQuantity() < stock.getReservedQuantity()) {
+                                return new ResponseDTO<>(
+                                                HttpStatus.BAD_REQUEST.toString(),
+                                                "Quantidade em estoque não pode ser menor que a quantidade reservada.",
+                                                null);
+                        }
+                        stock.setQuantity(dto.stockQuantity());
+                        stockRepository.save(stock);
                 }
-                stock.setQuantity(dto.stockQuantity());
-                stockRepository.save(stock);
 
                 Product updatedProduct = productRepository.save(product);
 

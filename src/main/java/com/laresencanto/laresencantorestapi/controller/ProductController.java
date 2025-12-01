@@ -53,8 +53,8 @@ public class ProductController {
             @RequestParam("pricingGroupId") Long pricingGroupId,
             @RequestParam("type") String type,
             @RequestParam("initialStockQuantity") int initialStockQuantity,
-            @RequestParam(value = "image", required = false) MultipartFile image, // O arquivo é opcional
-            @RequestParam(value = "weightKg", required = false) Double weightKg // Peso opcional
+            @RequestParam(value = "image", required = false) MultipartFile image,
+            @RequestParam(value = "weightKg", required = false) Double weightKg
     ) {
         ProductCreateDTO dto = new ProductCreateDTO(
                 name,
@@ -71,8 +71,35 @@ public class ProductController {
         return productService.createProduct(dto);
     }
 
-    @PutMapping(value = "/{id}")
-    public ResponseDTO<ProductResponseDTO> updateProduct(@PathVariable Integer id, @RequestBody ProductUpdateDTO dto) {
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseDTO<ProductResponseDTO> updateProduct(
+            @PathVariable Integer id,
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "price", required = false) Double price,
+            @RequestParam(value = "color", required = false) String color,
+            @RequestParam(value = "image", required = false) MultipartFile image,
+            @RequestParam(value = "isActive", required = false) Boolean isActive,
+            @RequestParam(value = "categoryId", required = false) Long categoryId,
+            @RequestParam(value = "pricingGroupId", required = false) Long pricingGroupId,
+            @RequestParam(value = "stockQuantity", required = false) Integer stockQuantity,
+            @RequestParam(value = "type", required = false) String type,
+            @RequestParam(value = "weightKg", required = false) Double weightKg
+    ) {
+        ProductUpdateDTO dto = new ProductUpdateDTO(
+                id,
+                name,
+                description,
+                price != null ? BigDecimal.valueOf(price) : null,
+                color,
+                image,
+                isActive,
+                categoryId != null ? Math.toIntExact(categoryId) : null,
+                pricingGroupId != null ? Math.toIntExact(pricingGroupId) : null,
+                stockQuantity,
+                type,
+                weightKg
+        );
         return productService.updateProduct(id, dto);
     }
 
