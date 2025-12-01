@@ -4,6 +4,7 @@ import com.laresencanto.laresencantorestapi.dto.request.address.AddressRequestDT
 import com.laresencanto.laresencantorestapi.dto.response.customer.CustomerResponseDTO;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
 public record OrderResponseDTO(
@@ -14,6 +15,7 @@ public record OrderResponseDTO(
         String type,
         Set<OrderProductResponseDTO> orderProducts,
         Set<OrderPaymentResponseDTO> orderPayments,
+        List<OrderCouponResponseDTO> orderCoupons,
         OrderShipmentResponseDTO shipment,
         Double totalPrice,
         LocalDateTime createdAt,

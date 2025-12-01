@@ -5,14 +5,16 @@ import com.laresencanto.laresencantorestapi.dto.response.order.OrderPaymentRespo
 import com.laresencanto.laresencantorestapi.dto.response.order.OrderProductResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.order.OrderShipmentResponseDTO;
 
+import java.util.List;
 import java.util.Set;
 
 public record OrderCreateRequestDTO(
-        AddressRequestDTO address,
-        Set<OrderPaymentResponseDTO> orderPayments,
-        Set<OrderProductResponseDTO> orderProducts,
-        OrderShipmentResponseDTO shipping,
-        String type,
-        Double totalPrice
+                AddressRequestDTO address,
+                Set<OrderPaymentResponseDTO> orderPayments,
+                Set<OrderProductResponseDTO> orderProducts,
+                OrderShipmentResponseDTO shipping,
+                String type,
+                Double totalPrice,
+                List<CouponUsageDTO> coupons
 ) {
 }
