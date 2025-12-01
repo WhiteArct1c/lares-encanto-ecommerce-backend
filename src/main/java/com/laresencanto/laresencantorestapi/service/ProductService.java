@@ -6,7 +6,7 @@ import com.laresencanto.laresencantorestapi.dto.request.product.ProductEnableDis
 import com.laresencanto.laresencantorestapi.dto.request.product.ProductUpdateDTO;
 import com.laresencanto.laresencantorestapi.dto.response.ResponseDTO;
 import com.laresencanto.laresencantorestapi.dto.response.pricingGroup.PricingGroupResponseDTO;
-import com.laresencanto.laresencantorestapi.dto.response.product.ProductResponseDTO;
+import com.laresencanto.laresencantorestapi.dto.response.product.*;
 import com.laresencanto.laresencantorestapi.dto.response.productCategory.ProductCategoryResponseDTO;
 import com.laresencanto.laresencantorestapi.repository.*;
 import org.apache.tika.Tika;
@@ -20,8 +20,10 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class ProductService {
@@ -31,18 +33,27 @@ public class ProductService {
         private final ProductCategoryRepository productCategoryRepository;
         private final ProductStatusHistoryRepository productStatusHistoryRepository;
         private final PricingGroupRepository pricingGroupRepository;
+        private final ColorRepository colorRepository;
+        private final TagRepository tagRepository;
+        private final TranslationService translationService;
 
         public ProductService(
                         ProductRepository productRepository,
                         StockRepository stockRepository,
                         ProductCategoryRepository productCategoryRepository,
                         ProductStatusHistoryRepository productStatusHistoryRepository,
-                        PricingGroupRepository pricingGroupRepository) {
+                        PricingGroupRepository pricingGroupRepository,
+                        ColorRepository colorRepository,
+                        TagRepository tagRepository,
+                        TranslationService translationService) {
                 this.productRepository = productRepository;
                 this.stockRepository = stockRepository;
                 this.productCategoryRepository = productCategoryRepository;
                 this.productStatusHistoryRepository = productStatusHistoryRepository;
                 this.pricingGroupRepository = pricingGroupRepository;
+                this.colorRepository = colorRepository;
+                this.tagRepository = tagRepository;
+                this.translationService = translationService;
         }
 
         /**
@@ -174,6 +185,20 @@ public class ProductService {
                         }
                 }
 
+                // Processa cores
+                if (dto.colorHexCodes() != null && !dto.colorHexCodes().isEmpty()) {
+                        product.setColors(processColors(dto.colorHexCodes()));
+                }
+
+                // Processa tags e traduz automaticamente
+                if (dto.tagNames() != null && !dto.tagNames().isEmpty()) {
+                        Set<Tag> tags = processTags(dto.tagNames());
+                        product.setTags(tags);
+                        
+                        // Traduz tags automaticamente (em background, não bloqueia a criação)
+                        translateTagsAsync(tags);
+                }
+
                 Product savedProduct = productRepository.save(product);
 
                 Stock stock = new Stock();
@@ -287,6 +312,20 @@ public class ProductService {
                         }
                         stock.setQuantity(dto.stockQuantity());
                         stockRepository.save(stock);
+                }
+
+                // Atualiza cores se fornecidas
+                if (dto.colorHexCodes() != null) {
+                        product.setColors(processColors(dto.colorHexCodes()));
+                }
+
+                // Atualiza tags se fornecidas e traduz automaticamente
+                if (dto.tagNames() != null) {
+                        Set<Tag> tags = processTags(dto.tagNames());
+                        product.setTags(tags);
+                        
+                        // Traduz tags automaticamente (em background, não bloqueia a atualização)
+                        translateTagsAsync(tags);
                 }
 
                 Product updatedProduct = productRepository.save(product);
@@ -430,6 +469,20 @@ public class ProductService {
                                 product.getCategory().getId(),
                                 product.getCategory().getName());
 
+                // Converte cores para DTO
+                List<ColorResponseDTO> colors = product.getColors() != null
+                                ? product.getColors().stream()
+                                                .map(c -> new ColorResponseDTO(c.getId(), c.getHexCode(), c.getName()))
+                                                .toList()
+                                : List.of();
+
+                // Converte tags para DTO
+                List<TagResponseDTO> tags = product.getTags() != null
+                                ? product.getTags().stream()
+                                                .map(t -> new TagResponseDTO(t.getId(), t.getName()))
+                                                .toList()
+                                : List.of();
+
                 return new ProductResponseDTO(
                                 product.getId(),
                                 product.getName(),
@@ -443,7 +496,73 @@ public class ProductService {
                                 pricingGroup,
                                 product.getType(),
                                 stockQuantity,
-                                product.getWeightKg());
+                                product.getWeightKg(),
+                                colors,
+                                tags);
+        }
+
+        /**
+         * Processa lista de códigos hexadecimais de cores, criando ou recuperando cores existentes
+         */
+        private Set<Color> processColors(List<String> hexCodes) {
+                Set<Color> colors = new HashSet<>();
+                for (String hexCode : hexCodes) {
+                        if (hexCode != null && !hexCode.trim().isEmpty()) {
+                                // Normaliza código hex (remove # se presente, adiciona se não)
+                                String normalizedHex = hexCode.trim().startsWith("#") 
+                                        ? hexCode.trim().toUpperCase() 
+                                        : "#" + hexCode.trim().toUpperCase();
+                                
+                                // Valida formato hex (7 caracteres: #RRGGBB)
+                                if (normalizedHex.matches("^#[0-9A-F]{6}$")) {
+                                        Color color = colorRepository.findByHexCode(normalizedHex)
+                                                        .orElseGet(() -> {
+                                                                Color newColor = new Color();
+                                                                newColor.setHexCode(normalizedHex);
+                                                                return colorRepository.save(newColor);
+                                                        });
+                                        colors.add(color);
+                                }
+                        }
+                }
+                return colors;
+        }
+
+        /**
+         * Processa lista de nomes de tags, criando ou recuperando tags existentes
+         */
+        private Set<Tag> processTags(List<String> tagNames) {
+                Set<Tag> tags = new HashSet<>();
+                for (String tagName : tagNames) {
+                        if (tagName != null && !tagName.trim().isEmpty()) {
+                                String normalizedName = tagName.trim().toLowerCase();
+                                Tag tag = tagRepository.findByNameIgnoreCase(normalizedName)
+                                                .orElseGet(() -> {
+                                                        Tag newTag = new Tag();
+                                                        newTag.setName(normalizedName);
+                                                        return tagRepository.save(newTag);
+                                                });
+                                tags.add(tag);
+                        }
+                }
+                return tags;
+        }
+
+        /**
+         * Traduz tags de forma assíncrona (não bloqueia a operação principal)
+         * As traduções são salvas no banco para uso futuro
+         */
+        private void translateTagsAsync(Set<Tag> tags) {
+                // Executa em uma thread separada para não bloquear
+                new Thread(() -> {
+                        try {
+                                translationService.translateTags(tags);
+                        } catch (Exception e) {
+                                // Log mas não falha a operação principal
+                                org.slf4j.LoggerFactory.getLogger(ProductService.class)
+                                        .warn("Error translating tags asynchronously: {}", e.getMessage());
+                        }
+                }).start();
         }
 
         /**
