@@ -14,6 +14,10 @@ public record PromotionalCouponCreateDTO(
         @Digits(integer = 8, fraction = 2, message = "Valor do cupom deve ter no máximo 8 dígitos inteiros e 2 decimais")
         BigDecimal value,
 
+        // Quantidade máxima de usos (opcional). Se null, o cupom nunca esgota por quantidade de usos.
+        @Positive(message = "Quantidade máxima de usos deve ser positiva")
+        Integer maxUses,
+
         @Positive(message = "ID do cliente deve ser positivo")
         Long customerId, // Opcional - se null, cupom é válido para qualquer cliente
 

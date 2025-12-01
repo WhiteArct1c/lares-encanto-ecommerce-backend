@@ -53,6 +53,15 @@ public class Coupon {
     @Column(name = "coupon_type", nullable = false, length = 20)
     private String couponType; // "EXCHANGE" ou "PROMOTIONAL"
 
+    // Campos específicos para cupons promocionais
+    // maxUses: quantidade máxima de usos permitidos (null = ilimitado)
+    // usedCount: quantidade de vezes que o cupom já foi utilizado
+    @Column(name = "max_uses")
+    private Integer maxUses;
+
+    @Column(name = "used_count")
+    private Integer usedCount;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -70,14 +79,24 @@ public class Coupon {
 
     /**
      * Verifica se o cupom está válido (ativo e não expirado)
+     * Regras:
+     * - EXCHANGE: precisa ter valor disponível
+     * - PROMOTIONAL: não depende de valor disponível, apenas de isActive/expiração
      */
     public Boolean isValid() {
-        if (!isActive) {
+        if (!Boolean.TRUE.equals(isActive)) {
             return false;
         }
         if (expiresAt != null && LocalDateTime.now().isAfter(expiresAt)) {
             return false;
         }
+
+        if ("PROMOTIONAL".equals(couponType)) {
+            // Para cupons promocionais, o valor é por uso; não é um saldo que esgota
+            return true;
+        }
+
+        // Para cupons de troca, exige valor disponível
         return getAvailableValue().compareTo(BigDecimal.ZERO) > 0;
     }
 }

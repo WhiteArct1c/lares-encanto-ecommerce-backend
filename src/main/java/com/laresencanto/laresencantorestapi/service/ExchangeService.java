@@ -498,6 +498,9 @@ public class ExchangeService {
     coupon.setCustomer(customer);
     coupon.setExchange(exchange);
     coupon.setCouponType("EXCHANGE");
+    // Campos de controle de uso (não se aplicam a EXCHANGE, mas não podem ser nulos)
+    coupon.setMaxUses(null);
+    coupon.setUsedCount(0);
 
     return couponRepository.save(coupon);
   }

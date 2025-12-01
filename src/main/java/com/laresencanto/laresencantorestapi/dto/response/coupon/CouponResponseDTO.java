@@ -12,7 +12,9 @@ public record CouponResponseDTO(
         Boolean isActive,
         LocalDateTime expiresAt,
         Long customerId,
-        String couponType
+        String couponType,
+        Integer maxUses,
+        Integer usedCount
 ) {
 }
 

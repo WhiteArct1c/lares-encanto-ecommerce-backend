@@ -94,16 +94,22 @@ public class CouponService {
             throw new BusinessException("Cupom expirado");
         }
 
-        // IMPORTANTE: Cupons promocionais podem ser usados infinitamente até expirar
-        // Não valida valor disponível para cupons promocionais
-        // Apenas cupons de troca precisam ter valor disponível
+        // Valida regras específicas por tipo de cupom
         if ("EXCHANGE".equals(coupon.getCouponType())) {
+            // Cupons de troca precisam ter valor disponível
             BigDecimal availableValue = coupon.getAvailableValue();
             if (availableValue.compareTo(BigDecimal.ZERO) <= 0) {
                 throw new BusinessException("Cupom não possui valor disponível");
             }
+        } else if ("PROMOTIONAL".equals(coupon.getCouponType())) {
+            // Cupons promocionais podem ser usados múltiplas vezes até expirar,
+            // mas se houver limite de usos (maxUses), respeita esse limite
+            Integer maxUses = coupon.getMaxUses();
+            int usedCount = coupon.getUsedCount() != null ? coupon.getUsedCount() : 0;
+            if (maxUses != null && usedCount >= maxUses) {
+                throw new BusinessException("Cupom já atingiu o limite máximo de usos");
+            }
         }
-        // Cupons promocionais: não valida valor disponível, pode ser usado mesmo totalmente usado
 
         return coupon;
     }
@@ -177,21 +183,31 @@ public class CouponService {
             }
         }
 
-        // Atualiza o valor usado
-        BigDecimal newUsedValue = coupon.getUsedValue().add(amountToUse);
-        coupon.setUsedValue(newUsedValue);
-
-        // IMPORTANTE: Cupons promocionais NÃO são desativados quando totalmente usados
-        // Eles podem ser usados múltiplas vezes até expirarem
-        // Apenas cupons de troca são desativados quando totalmente utilizados
+        // IMPORTANTE:
+        // - Cupons de troca (EXCHANGE): controlados por valor (usedValue / availableValue)
+        // - Cupons promocionais (PROMOTIONAL): controlados apenas por quantidade de usos (maxUses/usedCount)
         if ("EXCHANGE".equals(coupon.getCouponType())) {
-            // Cupons de troca: desativa quando totalmente utilizado
+            // Atualiza o valor usado apenas para cupons de troca
+            BigDecimal newUsedValue = coupon.getUsedValue().add(amountToUse);
+            coupon.setUsedValue(newUsedValue);
+
+            // Desativa quando totalmente utilizado em valor
             if (newUsedValue.compareTo(coupon.getValue()) >= 0) {
                 coupon.setIsActive(false);
             }
+        } else if ("PROMOTIONAL".equals(coupon.getCouponType())) {
+            // NÃO mexe em usedValue: o valor do cupom vale por uso, não é um saldo que esgota
+
+            // Atualiza contagem de usos para cupons promocionais
+            Integer currentUsedCount = coupon.getUsedCount() != null ? coupon.getUsedCount() : 0;
+            coupon.setUsedCount(currentUsedCount + 1);
+
+            // Se maxUses estiver definido, desativa quando atingir o limite
+            Integer maxUses = coupon.getMaxUses();
+            if (maxUses != null && coupon.getUsedCount() >= maxUses) {
+                coupon.setIsActive(false);
+            }
         }
-        // Cupons promocionais: permanecem ativos mesmo quando totalmente usados
-        // Serão desativados apenas quando expirarem (validação no isValid())
 
         couponRepository.save(coupon);
     }
@@ -209,7 +225,9 @@ public class CouponService {
                 coupon.getIsActive(),
                 coupon.getExpiresAt(),
                 coupon.getCustomer() != null ? coupon.getCustomer().getId() : null,
-                coupon.getCouponType());
+                coupon.getCouponType(),
+                coupon.getMaxUses(),
+                coupon.getUsedCount());
     }
 
     /**
@@ -244,6 +262,8 @@ public class CouponService {
         coupon.setCustomer(customer); // Null para cupons válidos para qualquer cliente
         coupon.setExchange(null); // Cupons promocionais não estão vinculados a trocas
         coupon.setCouponType("PROMOTIONAL");
+        coupon.setMaxUses(dto.maxUses());
+        coupon.setUsedCount(0);
 
         Coupon savedCoupon = couponRepository.save(coupon);
 
